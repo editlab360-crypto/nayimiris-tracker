@@ -4,27 +4,53 @@
   const KEY_OF = { dateNpk: 'npk', dateFungicide: 'fungicide', dateHormone: 'hormone' };
   const TX = {
     si: {
-      prodLabel: 'භාවිතා කළ බෙහෙත් / පොහොර නම:', prodPh: 'උදා: Mancozeb, 15-15-15',
-      priceLabel: 'විකුණූ මිල (රු. / කිලෝ එකක්):', pricePh: 'උදා: 450',
-      logTitle: 'යෙදුම් ඉතිහාසය (බෙහෙත් / පොහොර)', logTag: 'යෙදූ නම් සටහන',
-      thType: 'වර්ගය', thName: 'නම', thPrice: 'රු./kg', thValue: 'වටිනාකම (රු.)',
-      kpiRev: 'මුළු ආදායම', kpiRevSub: 'සාමාන්‍ය මිල: රු. ', emptyLog: 'තවම යෙදුම් සටහන් නැත',
-      npk: 'NPK පොහොර', fungicide: 'දිලීර නාශක', hormone: 'හෝමෝන', sessions: 'අස්වනු වාර',
-      invalid: 'කරුණාකර වලංගු දිනයක් සහ බරක් (kg > 0) ඇතුළත් කරන්න.', fresh: 'නෙළන ලද නැවුම් අස්වැන්න'
+      prodLabel: 'භාවිතා කළ වෙළඳ නාමය / පොහොර නම:', 
+      prodPh: 'උදා: Mancozeb, Abamectin, NPK 15-15-15',
+      priceLabel: 'විකුණූ මිල (1 kg එකකට රුපියල්):', 
+      pricePh: 'උදා: 450',
+      logTitle: 'යෙදුම් ඉතිහාසය (පොහොර / පළිබෝධ නාශක / දිලීර නාශක)', 
+      logTag: 'යෙදූ යෙදුම් සටහන',
+      thType: 'වර්ගය', 
+      thName: 'වෙළඳ නාමය (Brand Name)', 
+      thPrice: 'රු./kg', 
+      thValue: 'වටිනාකම (රු.)',
+      kpiRev: 'මුළු ආදායම', 
+      kpiRevSub: 'සාමාන්‍ය මිල: රු. ', 
+      emptyLog: 'තවම යෙදුම් සටහන් කර නොමැත',
+      npk: 'NPK පොහොර', 
+      fungicide: 'දිලීර / පළිබෝධ නාශක', 
+      hormone: 'හෝමෝන', 
+      sessions: 'අස්වනු වාර',
+      invalid: 'කරුණාකර වලංගු දිනයක් සහ බරක් (kg > 0) ඇතුළත් කරන්න.', 
+      fresh: 'නෙළන ලද නැවුම් අස්වැන්න'
     },
     en: {
-      prodLabel: 'Chemical / Fertilizer Name Used:', prodPh: 'e.g. Mancozeb, 15-15-15',
-      priceLabel: 'Selling Price (Rs. per kg):', pricePh: 'e.g. 450',
-      logTitle: 'Application History (Chemicals / Fertilizers)', logTag: 'Product Log',
-      thType: 'Type', thName: 'Product Name', thPrice: 'Rs./kg', thValue: 'Value (Rs.)',
-      kpiRev: 'Total Revenue', kpiRevSub: 'Avg price: Rs. ', emptyLog: 'No applications logged yet',
-      npk: 'NPK Fertilizer', fungicide: 'Fungicide', hormone: 'Hormone', sessions: 'Sessions',
-      invalid: 'Please enter a valid date and weight (kg > 0).', fresh: 'Fresh picking'
+      prodLabel: 'Brand Name / Fertilizer Used:', 
+      prodPh: 'e.g. Mancozeb, Abamectin, NPK 15-15-15',
+      priceLabel: 'Selling Price (Rs. per kg):', 
+      pricePh: 'e.g. 450',
+      logTitle: 'Application History (Fertilizers / Fungicides / Pesticides)', 
+      logTag: 'Product Log',
+      thType: 'Type', 
+      thName: 'Brand Name', 
+      thPrice: 'Rs./kg', 
+      thValue: 'Value (Rs.)',
+      kpiRev: 'Total Revenue', 
+      kpiRevSub: 'Avg price: Rs. ', 
+      emptyLog: 'No applications logged yet',
+      npk: 'NPK Fertilizer', 
+      fungicide: 'Fungicide / Pesticide', 
+      hormone: 'Hormone', 
+      sessions: 'Sessions',
+      invalid: 'Please enter a valid date and weight (kg > 0).', 
+      fresh: 'Fresh picking'
     }
   };
-  const x = k => TX[currentLang][k];
+
+  const x = k => TX[currentLang] ? TX[currentLang][k] : TX['si'][k];
   const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
   const fmt = n => Number(n).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  
   function ensure() {
     if (!farmData.products) farmData.products = { npk: '', fungicide: '', hormone: '' };
     if (!farmData.applog) farmData.applog = [];
@@ -33,13 +59,17 @@
   /* ---------- 1. Product-name inputs on the 3 cards ---------- */
   Object.keys(DK).forEach(key => {
     const cardId = { npk: 'cardNpk', fungicide: 'cardFungicide', hormone: 'cardHormone' }[key];
-    const box = document.querySelector('#' + cardId + ' .schedule-inputs');
+    const cardEl = document.getElementById(cardId);
+    if (!cardEl) return;
+    
+    const box = cardEl.querySelector('.schedule-inputs') || cardEl;
     const g = document.createElement('div');
     g.className = 'form-group';
     g.innerHTML = '<label id="lblProd_' + key + '" for="prod_' + key + '"></label>' +
       '<input type="text" id="prod_' + key + '" list="dl_' + key + '" autocomplete="off">' +
       '<datalist id="dl_' + key + '"></datalist>';
     box.insertBefore(g, box.firstChild);
+    
     g.querySelector('input').addEventListener('input', e => {
       ensure();
       const name = e.target.value;
@@ -64,7 +94,11 @@
     '<div class="harvest-table-wrap"><table class="harvest-table"><thead><tr>' +
     '<th id="xThDate"></th><th id="xThType"></th><th id="xThName"></th><th style="text-align:right">&nbsp;</th>' +
     '</tr></thead><tbody id="xLogBody"></tbody></table></div>';
-  document.querySelector('.panel-schedules').insertAdjacentElement('afterend', logPanel);
+  
+  const schedulesPanel = document.querySelector('.panel-schedules');
+  if (schedulesPanel) {
+    schedulesPanel.insertAdjacentElement('afterend', logPanel);
+  }
 
   window.delLog = function (id) {
     ensure();
@@ -76,145 +110,211 @@
   function renderLog() {
     ensure();
     const body = document.getElementById('xLogBody');
+    if (!body) return;
+    
     const log = [...farmData.applog].sort((a, b) => b.date.localeCompare(a.date));
     body.innerHTML = log.length ? '' : '<tr><td colspan="4" style="text-align:center;color:var(--text-muted);padding:1.5rem">' + x('emptyLog') + '</td></tr>';
+    
     log.forEach(a => {
       const tr = document.createElement('tr');
-      tr.innerHTML = '<td style="font-weight:600">' + formatDateDisplay(a.date) + '</td>' +
+      tr.innerHTML = '<td style="font-weight:600">' + (typeof formatDateDisplay === 'function' ? formatDateDisplay(a.date) : a.date) + '</td>' +
         '<td>' + x(a.type) + '</td>' +
         '<td><span class="weight-badge">' + (esc(a.name) || '—') + '</span></td>' +
         '<td style="text-align:right"><button class="btn-delete" onclick="delLog(\'' + a.id + '\')">🗑</button></td>';
       body.appendChild(tr);
     });
+    
     Object.keys(DK).forEach(key => {
-      const names = [...new Set(farmData.applog.filter(a => a.type === key && a.name).map(a => a.name))];
-      document.getElementById('dl_' + key).innerHTML = names.map(n => '<option value="' + esc(n) + '">').join('');
+      const dl = document.getElementById('dl_' + key);
+      if (dl) {
+        const names = [...new Set(farmData.applog.filter(a => a.type === key && a.name).map(a => a.name))];
+        dl.innerHTML = names.map(n => '<option value="' + esc(n) + '">').join('');
+      }
     });
   }
 
   /* ---------- 3. Harvest form: price field ---------- */
-  const kgGroup = document.getElementById('harvestKg').closest('.form-group');
-  kgGroup.insertAdjacentHTML('afterend',
-    '<div class="form-group"><label for="harvestPrice" id="xLblPrice"></label>' +
-    '<input type="number" id="harvestPrice" step="0.01" min="0"></div>');
+  const harvestKg = document.getElementById('harvestKg');
+  if (harvestKg) {
+    const kgGroup = harvestKg.closest('.form-group');
+    if (kgGroup) {
+      kgGroup.insertAdjacentHTML('afterend',
+        '<div class="form-group"><label for="harvestPrice" id="xLblPrice"></label>' +
+        '<input type="number" id="harvestPrice" step="0.01" min="0"></div>');
+    }
+  }
 
   /* ---------- 4. Revenue KPI card ---------- */
-  document.querySelector('.kpi-row').insertAdjacentHTML('beforeend',
-    '<div class="kpi-card"><div class="kpi-info"><p class="label" id="xKpiRevLbl"></p>' +
-    '<h3 id="xKpiRev">0.00</h3><p class="subtext" id="xKpiRevSub"></p></div>' +
-    '<div class="kpi-icon-wrap kpi-icon-amber">💰</div></div>');
+  const kpiRow = document.querySelector('.kpi-row');
+  if (kpiRow) {
+    kpiRow.insertAdjacentHTML('beforeend',
+      '<div class="kpi-card"><div class="kpi-info"><p class="label" id="xKpiRevLbl"></p>' +
+      '<h3 id="xKpiRev">රු. 0.00</h3><p class="subtext" id="xKpiRevSub"></p></div>' +
+      '<div class="kpi-icon-wrap kpi-icon-amber">💰</div></div>');
+  }
 
   /* ---------- 5. Harvest table header with price + value ---------- */
-  document.querySelector('#harvestTable thead').innerHTML =
-    '<tr><th>#</th><th id="thDate"></th><th id="thWeight"></th><th id="xThPrice"></th><th id="xThValue"></th>' +
-    '<th id="thNotes"></th><th style="text-align:right" id="thAction"></th></tr>';
+  const harvestThead = document.querySelector('#harvestTable thead');
+  if (harvestThead) {
+    harvestThead.innerHTML =
+      '<tr><th>#</th><th id="thDate"></th><th id="thWeight"></th><th id="xThPrice"></th><th id="xThValue"></th>' +
+      '<th id="thNotes"></th><th style="text-align:right" id="thAction"></th></tr>';
+  }
 
   /* ---------- Overrides ---------- */
-  const origFC = handleFieldChange;
-  handleFieldChange = function (id, v) {
-    const type = KEY_OF[id];
-    if (type && v) {
+  if (typeof handleFieldChange !== 'undefined') {
+    const origFC = handleFieldChange;
+    handleFieldChange = function (id, v) {
+      const type = KEY_OF[id];
+      if (type && v) {
+        ensure();
+        const nm = (farmData.products[type] || '').trim();
+        const en = farmData.applog.find(a => a.type === type && a.date === v);
+        if (en) { if (nm) en.name = nm; }
+        else farmData.applog.push({ id: Date.now() + type, type: type, date: v, name: nm });
+      }
+      origFC(id, v);
+    };
+  }
+
+  if (typeof handleHarvestSubmit !== 'undefined') {
+    handleHarvestSubmit = function (event) {
+      event.preventDefault();
+      const dateVal = document.getElementById('harvestDate').value;
+      const kgVal = parseFloat(document.getElementById('harvestKg').value);
+      const priceVal = document.getElementById('harvestPrice');
+      const price = priceVal ? parseFloat(priceVal.value) : 0;
+      const notesVal = document.getElementById('harvestNotes');
+      const notes = notesVal ? notesVal.value.trim() : '';
+
+      if (!dateVal || isNaN(kgVal) || kgVal <= 0) { alert(x('invalid')); return; }
+
+      farmData.harvests.unshift({
+        id: Date.now().toString(), date: dateVal, kg: kgVal,
+        price: isNaN(price) ? 0 : price, notes: notes || x('fresh')
+      });
+      
+      saveData();
+      document.getElementById('harvestKg').value = '';
+      if (priceVal) priceVal.value = '';
+      if (notesVal) notesVal.value = '';
+      if (typeof setDateFieldToday === 'function') setDateFieldToday('harvestDate');
+      renderHarvests();
+    };
+  }
+
+  if (typeof renderHarvests !== 'undefined') {
+    renderHarvests = function () {
+      const tb = document.getElementById('harvestTableBody');
+      const empty = document.getElementById('harvestEmptyState');
+      const H = farmData.harvests || [];
+      if (!tb) return;
+      
+      tb.innerHTML = '';
+      let tk = 0, tv = 0, pricedKg = 0;
+      const sorted = [...H].sort((a, b) => new Date(b.date) - new Date(a.date));
+      
+      sorted.forEach((it, i) => {
+        const kg = Number(it.kg), p = Number(it.price) || 0;
+        tk += kg; tv += kg * p; if (p) pricedKg += kg;
+        
+        const tr = document.createElement('tr');
+        tr.innerHTML =
+          '<td style="color:var(--text-muted);font-size:.78rem">' + (sorted.length - i) + '</td>' +
+          '<td style="font-weight:600">' + (typeof formatDateDisplay === 'function' ? formatDateDisplay(it.date) : it.date) + '</td>' +
+          '<td><span class="weight-badge">' + kg.toFixed(2) + ' kg</span></td>' +
+          '<td>' + (p ? 'රු. ' + fmt(p) : '-') + '</td>' +
+          '<td style="font-weight:700;color:#2e7d32">' + (p ? 'රු. ' + fmt(kg * p) : '-') + '</td>' +
+          '<td style="color:var(--text-muted)">' + (esc(it.notes) || '-') + '</td>' +
+          '<td style="text-align:right"><button class="btn-delete" onclick="deleteHarvest(\'' + it.id + '\')">🗑</button></td>';
+        tb.appendChild(tr);
+      });
+      
+      if (empty) empty.style.display = H.length ? 'none' : 'block';
+      
+      const sessionEl = document.getElementById('tableSessionCount');
+      if (sessionEl) sessionEl.textContent = H.length;
+      
+      const kpiYield = document.getElementById('kpiTotalYield');
+      if (kpiYield) {
+        kpiYield.innerHTML = tk.toFixed(2) +
+          ' <span style="font-size:1rem;font-weight:normal;color:var(--text-muted)">kg</span>';
+      }
+      
+      const kpiCount = document.getElementById('kpiHarvestCount');
+      if (kpiCount) {
+        kpiCount.textContent = H.length
+          ? H.length + ' ' + x('sessions') + ' (Avg ' + (tk / H.length).toFixed(1) + ' kg)' 
+          : (typeof t === 'function' ? t('kpiHarvestCountEmpty') : '0 Sessions');
+      }
+
+      const revEl = document.getElementById('xKpiRev');
+      if (revEl) revEl.innerHTML = 'රු. ' + fmt(tv);
+      
+      const revSubEl = document.getElementById('xKpiRevSub');
+      if (revSubEl) revSubEl.textContent = pricedKg ? x('kpiRevSub') + fmt(tv / pricedKg) + ' / kg' : '—';
+    };
+  }
+
+  if (typeof syncInputsFromState !== 'undefined') {
+    const origSync = syncInputsFromState;
+    syncInputsFromState = function () {
       ensure();
-      const nm = (farmData.products[type] || '').trim();
-      const en = farmData.applog.find(a => a.type === type && a.date === v);
-      if (en) { if (nm) en.name = nm; }
-      else farmData.applog.push({ id: Date.now() + type, type: type, date: v, name: nm });
-    }
-    origFC(id, v);
-  };
+      origSync();
+      Object.keys(DK).forEach(k => {
+        const inp = document.getElementById('prod_' + k);
+        if (inp) inp.value = farmData.products[k] || '';
+      });
+    };
+  }
 
-  handleHarvestSubmit = function (event) {
-    event.preventDefault();
-    const dateVal = document.getElementById('harvestDate').value;
-    const kgVal = parseFloat(document.getElementById('harvestKg').value);
-    const price = parseFloat(document.getElementById('harvestPrice').value);
-    const notes = document.getElementById('harvestNotes').value.trim();
-    if (!dateVal || isNaN(kgVal) || kgVal <= 0) { alert(x('invalid')); return; }
-    farmData.harvests.unshift({
-      id: Date.now().toString(), date: dateVal, kg: kgVal,
-      price: isNaN(price) ? 0 : price, notes: notes || x('fresh')
-    });
-    saveData();
-    document.getElementById('harvestKg').value = '';
-    document.getElementById('harvestNotes').value = '';
-    setDateFieldToday('harvestDate');
-    renderHarvests();
-  };
+  if (typeof renderAll !== 'undefined') {
+    const origRenderAll = renderAll;
+    renderAll = function () { origRenderAll(); renderLog(); };
+  }
 
-  renderHarvests = function () {
-    const tb = document.getElementById('harvestTableBody');
-    const empty = document.getElementById('harvestEmptyState');
-    const H = farmData.harvests || [];
-    tb.innerHTML = '';
-    let tk = 0, tv = 0, pricedKg = 0;
-    const sorted = [...H].sort((a, b) => new Date(b.date) - new Date(a.date));
-    sorted.forEach((it, i) => {
-      const kg = Number(it.kg), p = Number(it.price) || 0;
-      tk += kg; tv += kg * p; if (p) pricedKg += kg;
-      const tr = document.createElement('tr');
-      tr.innerHTML =
-        '<td style="color:var(--text-muted);font-size:.78rem">' + (sorted.length - i) + '</td>' +
-        '<td style="font-weight:600">' + formatDateDisplay(it.date) + '</td>' +
-        '<td><span class="weight-badge">' + kg.toFixed(2) + ' kg</span></td>' +
-        '<td>' + (p ? fmt(p) : '-') + '</td>' +
-        '<td style="font-weight:700;color:#fbbf24">' + (p ? fmt(kg * p) : '-') + '</td>' +
-        '<td style="color:var(--text-muted)">' + (esc(it.notes) || '-') + '</td>' +
-        '<td style="text-align:right"><button class="btn-delete" onclick="deleteHarvest(\'' + it.id + '\')">🗑</button></td>';
-      tb.appendChild(tr);
-    });
-    empty.style.display = H.length ? 'none' : 'block';
-    document.getElementById('tableSessionCount').textContent = H.length;
-    document.getElementById('kpiTotalYield').innerHTML = tk.toFixed(2) +
-      ' <span style="font-size:1rem;font-weight:normal;color:var(--text-muted)">kg</span>';
-    document.getElementById('kpiHarvestCount').textContent = H.length
-      ? H.length + ' ' + x('sessions') + ' (Avg ' + (tk / H.length).toFixed(1) + ' kg)' : t('kpiHarvestCountEmpty');
-    document.getElementById('xKpiRev').innerHTML = 'Rs. ' + fmt(tv);
-    document.getElementById('xKpiRevSub').textContent = pricedKg ? x('kpiRevSub') + fmt(tv / pricedKg) + ' / kg' : '—';
-  };
+  if (typeof updateLanguageUI !== 'undefined') {
+    const origUL = updateLanguageUI;
+    updateLanguageUI = function () {
+      origUL();
+      Object.keys(DK).forEach(k => {
+        const lbl = document.getElementById('lblProd_' + k);
+        const inp = document.getElementById('prod_' + k);
+        if (lbl) lbl.textContent = x('prodLabel');
+        if (inp) inp.placeholder = x('prodPh');
+      });
+      
+      const lblPrice = document.getElementById('xLblPrice');
+      const hPrice = document.getElementById('harvestPrice');
+      if (lblPrice) lblPrice.textContent = x('priceLabel');
+      if (hPrice) hPrice.placeholder = x('pricePh');
+      
+      const logTitle = document.getElementById('xLogTitle');
+      const logTag = document.getElementById('xLogTag');
+      if (logTitle) logTitle.textContent = x('logTitle');
+      if (logTag) logTag.textContent = x('logTag');
+      
+      const thDate = document.getElementById('xThDate');
+      const thType = document.getElementById('xThType');
+      const thName = document.getElementById('xThName');
+      const thPrice = document.getElementById('xThPrice');
+      const thValue = document.getElementById('xThValue');
+      if (thDate) thDate.textContent = typeof t === 'function' ? t('thDate') : 'දිනය';
+      if (thType) thType.textContent = x('thType');
+      if (thName) thName.textContent = x('thName');
+      if (thPrice) thPrice.textContent = x('thPrice');
+      if (thValue) thValue.textContent = x('thValue');
+      
+      const kpiRevLbl = document.getElementById('xKpiRevLbl');
+      if (kpiRevLbl) kpiRevLbl.textContent = x('kpiRev');
+    };
+  }
 
-  exportCsv = function () {
-    if (!farmData.harvests || !farmData.harvests.length) { alert(t('alertNoExport')); return; }
-    let csv = 'ID,Date,Weight_kg,Price_per_kg,Value,Notes\n';
-    farmData.harvests.forEach(h => {
-      const p = Number(h.price) || 0;
-      csv += '"' + h.id + '","' + h.date + '",' + h.kg + ',' + p + ',' + (h.kg * p).toFixed(2) +
-        ',"' + (h.notes || '').replace(/"/g, '""') + '"\n';
-    });
-    csv += '\nDate,Type,Product\n';
-    (farmData.applog || []).forEach(a => { csv += '"' + a.date + '","' + a.type + '","' + (a.name || '').replace(/"/g, '""') + '"\n'; });
-    const link = document.createElement('a');
-    link.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8;' }));
-    link.download = 'Nai_Miris_Harvest_' + getTodayString() + '.csv';
-    document.body.appendChild(link); link.click(); document.body.removeChild(link);
-  };
-
-  const origSync = syncInputsFromState;
-  syncInputsFromState = function () {
+  // Initial call
+  setTimeout(() => {
     ensure();
-    origSync();
-    Object.keys(DK).forEach(k => { document.getElementById('prod_' + k).value = farmData.products[k] || ''; });
-  };
-
-  const origRenderAll = renderAll;
-  renderAll = function () { origRenderAll(); renderLog(); };
-
-  const origUL = updateLanguageUI;
-  updateLanguageUI = function () {
-    origUL();
-    Object.keys(DK).forEach(k => {
-      document.getElementById('lblProd_' + k).textContent = x('prodLabel');
-      document.getElementById('prod_' + k).placeholder = x('prodPh');
-    });
-    document.getElementById('xLblPrice').textContent = x('priceLabel');
-    document.getElementById('harvestPrice').placeholder = x('pricePh');
-    document.getElementById('xLogTitle').textContent = x('logTitle');
-    document.getElementById('xLogTag').textContent = x('logTag');
-    document.getElementById('xThDate').textContent = t('thDate');
-    document.getElementById('xThType').textContent = x('thType');
-    document.getElementById('xThName').textContent = x('thName');
-    document.getElementById('xThPrice').textContent = x('thPrice');
-    document.getElementById('xThValue').textContent = x('thValue');
-    document.getElementById('xKpiRevLbl').textContent = x('kpiRev');
-  };
+    renderLog();
+    if (typeof updateLanguageUI === 'function') updateLanguageUI();
+  }, 300);
 })();
 </script>
