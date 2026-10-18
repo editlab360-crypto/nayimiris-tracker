@@ -1,269 +1,245 @@
 <script>
-(function () {
-  if (window.__farmAddonLoaded) return;
-  window.__farmAddonLoaded = true;
-  if (typeof farmData === 'undefined') { console.error('Add-on: main script not found above this block'); return; }
+    let harvestChart = null;
+    let farmData = {
+        plantingDate: '', lastFertilizer: '', lastFungicide: '', lastHormone: '',
+        prodNpk: '', prodFungicide: '', prodHormone: '',
+        weatherCity: 'monaragala',
+        harvests: []
+    };
+    const CYCLE = { npk: 14, fungicide: 7, hormone: 10 };
 
-  const DK = { npk: 'dateNpk', fungicide: 'dateFungicide', hormone: 'dateHormone' };
-  const KEY_OF = { dateNpk: 'npk', dateFungicide: 'fungicide', dateHormone: 'hormone' };
-  const TX = {
-    si: {
-      prodLabel: 'භාවිතා කළ වෙළඳ නාමය / පොහොර නම:', prodPh: 'උදා: Mancozeb, Abamectin, NPK 15-15-15',
-      priceLabel: 'විකුණූ මිල (1 kg එකකට රුපියල්):', pricePh: 'උදා: 450',
-      logTitle: 'යෙදුම් ඉතිහාසය (පොහොර / පළිබෝධ නාශක / දිලීර නාශක)', logTag: 'යෙදූ යෙදුම් සටහන',
-      thType: 'වර්ගය', thName: 'වෙළඳ නාමය (Brand Name)', thPrice: 'රු./kg', thValue: 'වටිනාකම (රු.)',
-      kpiRev: 'මුළු ආදායම', kpiRevSub: 'සාමාන්‍ය මිල: රු. ', emptyLog: 'තවම යෙදුම් සටහන් කර නොමැත',
-      npk: 'NPK පොහොර', fungicide: 'දිලීර / පළිබෝධ නාශක', hormone: 'හෝමෝන', sessions: 'අස්වනු වාර',
-      invalid: 'කරුණාකර වලංගු දිනයක් සහ බරක් (kg > 0) ඇතුළත් කරන්න.', fresh: 'නෙළන ලද නැවුම් අස්වැන්න'
-    },
-    en: {
-      prodLabel: 'Brand Name / Fertilizer Used:', prodPh: 'e.g. Mancozeb, Abamectin, NPK 15-15-15',
-      priceLabel: 'Selling Price (Rs. per kg):', pricePh: 'e.g. 450',
-      logTitle: 'Application History (Fertilizers / Fungicides / Pesticides)', logTag: 'Product Log',
-      thType: 'Type', thName: 'Brand Name', thPrice: 'Rs./kg', thValue: 'Value (Rs.)',
-      kpiRev: 'Total Revenue', kpiRevSub: 'Avg price: Rs. ', emptyLog: 'No applications logged yet',
-      npk: 'NPK Fertilizer', fungicide: 'Fungicide / Pesticide', hormone: 'Hormone', sessions: 'Sessions',
-      invalid: 'Please enter a valid date and weight (kg > 0).', fresh: 'Fresh picking'
+    // වගා ස්ථාන සහ ඒවායේ අක්ෂාංශ / දේශාංශ
+    const coords = {
+        monaragala:   { lat: 6.8728, lon: 81.3507, name: 'මොනරාගල (Monaragala)' },
+        colombo:      { lat: 6.9271, lon: 79.8612, name: 'කොළඹ (Colombo)' },
+        gampaha:      { lat: 7.0840, lon: 80.0098, name: 'ගම්පහ (Gampaha)' },
+        kandy:        { lat: 7.2906, lon: 80.6337, name: 'මහනුවර (Kandy)' },
+        kurunegala:   { lat: 7.4863, lon: 80.3647, name: 'කුරුණෑගල (Kurunegala)' },
+        anuradhapura: { lat: 8.3114, lon: 80.4037, name: 'අනුරාධපුරය (Anuradhapura)' },
+        galle:        { lat: 6.0535, lon: 80.2210, name: 'ගාල්ල (Galle)' },
+        jaffna:       { lat: 9.6615, lon: 80.0255, name: 'යාපනය (Jaffna)' }
+    };
+
+    const $ = id => document.getElementById(id);
+    const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+    const money = n => 'රු. ' + Number(n).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
+    function todayStr() {
+        const d = new Date();
+        return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
     }
-  };
-  const x = k => (TX[currentLang] || TX.si)[k];
-  const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
-  const fmt = n => Number(n).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-  function ensure() {
-    if (!farmData.products) farmData.products = { npk: '', fungicide: '', hormone: '' };
-    if (!farmData.applog) farmData.applog = [];
-  }
-
-  /* ---------- 1. Product-name inputs on the 3 cards ---------- */
-  Object.keys(DK).forEach(key => {
-    const cardId = { npk: 'cardNpk', fungicide: 'cardFungicide', hormone: 'cardHormone' }[key];
-    const cardEl = document.getElementById(cardId);
-    if (!cardEl) return;
-    const box = cardEl.querySelector('.schedule-inputs') || cardEl;
-    const g = document.createElement('div');
-    g.className = 'form-group';
-    g.innerHTML = '<label id="lblProd_' + key + '" for="prod_' + key + '"></label>' +
-      '<input type="text" id="prod_' + key + '" list="dl_' + key + '" autocomplete="off">' +
-      '<datalist id="dl_' + key + '"></datalist>';
-    box.insertBefore(g, box.firstChild);
-    g.querySelector('input').addEventListener('input', e => {
-      ensure();
-      const name = e.target.value;
-      farmData.products[key] = name;
-      const d = farmData[DK[key]];
-      if (d) {
-        const en = farmData.applog.find(a => a.type === key && a.date === d);
-        if (en) en.name = name.trim();
-        else if (name.trim()) farmData.applog.push({ id: Date.now() + key, type: key, date: d, name: name.trim() });
-      }
-      saveData();
-      renderLog();
-    });
-  });
-
-  /* ---------- 2. Application history panel ---------- */
-  const logPanel = document.createElement('section');
-  logPanel.className = 'panel';
-  logPanel.style.gridColumn = 'span 12';
-  logPanel.innerHTML =
-    '<div class="panel-header"><h2><span>📒</span> <span id="xLogTitle"></span></h2><span class="badge-tag" id="xLogTag"></span></div>' +
-    '<div class="harvest-table-wrap"><table class="harvest-table"><thead><tr>' +
-    '<th id="xThDate"></th><th id="xThType"></th><th id="xThName"></th><th style="text-align:right">&nbsp;</th>' +
-    '</tr></thead><tbody id="xLogBody"></tbody></table></div>';
-  const schedulesPanel = document.querySelector('.panel-schedules');
-  if (schedulesPanel) schedulesPanel.insertAdjacentElement('afterend', logPanel);
-
-  window.delLog = function (id) {
-    ensure();
-    farmData.applog = farmData.applog.filter(a => a.id !== id);
-    saveData();
-    renderLog();
-  };
-
-  function renderLog() {
-    ensure();
-    const body = document.getElementById('xLogBody');
-    if (!body) return;
-    const log = [...farmData.applog].sort((a, b) => b.date.localeCompare(a.date));
-    body.innerHTML = log.length ? '' : '<tr><td colspan="4" style="text-align:center;color:var(--text-muted);padding:1.5rem">' + x('emptyLog') + '</td></tr>';
-    log.forEach(a => {
-      const tr = document.createElement('tr');
-      tr.innerHTML = '<td style="font-weight:600">' + formatDateDisplay(a.date) + '</td>' +
-        '<td>' + x(a.type) + '</td>' +
-        '<td><span class="weight-badge">' + (esc(a.name) || '—') + '</span></td>' +
-        '<td style="text-align:right"><button class="btn-delete" onclick="delLog(\'' + a.id + '\')">🗑</button></td>';
-      body.appendChild(tr);
-    });
-    Object.keys(DK).forEach(key => {
-      const dl = document.getElementById('dl_' + key);
-      if (dl) {
-        const names = [...new Set(farmData.applog.filter(a => a.type === key && a.name).map(a => a.name))];
-        dl.innerHTML = names.map(n => '<option value="' + esc(n) + '">').join('');
-      }
-    });
-  }
-
-  /* ---------- 3. Harvest form: price field ---------- */
-  const harvestKg = document.getElementById('harvestKg');
-  if (harvestKg && harvestKg.closest('.form-group')) {
-    harvestKg.closest('.form-group').insertAdjacentHTML('afterend',
-      '<div class="form-group"><label for="harvestPrice" id="xLblPrice"></label>' +
-      '<input type="number" id="harvestPrice" step="0.01" min="0"></div>');
-  }
-
-  /* ---------- 4. Revenue KPI card ---------- */
-  const kpiRow = document.querySelector('.kpi-row');
-  if (kpiRow) {
-    kpiRow.insertAdjacentHTML('beforeend',
-      '<div class="kpi-card"><div class="kpi-info"><p class="label" id="xKpiRevLbl"></p>' +
-      '<h3 id="xKpiRev">රු. 0.00</h3><p class="subtext" id="xKpiRevSub"></p></div>' +
-      '<div class="kpi-icon-wrap kpi-icon-amber">💰</div></div>');
-  }
-
-  /* ---------- 5. Harvest table header ---------- */
-  const harvestThead = document.querySelector('#harvestTable thead');
-  if (harvestThead) {
-    harvestThead.innerHTML =
-      '<tr><th>#</th><th id="thDate"></th><th id="thWeight"></th><th id="xThPrice"></th><th id="xThValue"></th>' +
-      '<th id="thNotes"></th><th style="text-align:right" id="thAction"></th></tr>';
-  }
-
-  /* ---------- Overrides ---------- */
-  const origFC = handleFieldChange;
-  handleFieldChange = function (id, v) {
-    const type = KEY_OF[id];
-    if (type && v) {
-      ensure();
-      const nm = (farmData.products[type] || '').trim();
-      const en = farmData.applog.find(a => a.type === type && a.date === v);
-      if (en) { if (nm) en.name = nm; }
-      else farmData.applog.push({ id: Date.now() + type, type: type, date: v, name: nm });
+    // YYYY-MM-DD දිනයක සිට අද දක්වා දවස් ගණන (local වේලාවෙන්)
+    function daysSince(s) {
+        if (!s) return null;
+        const [y, m, d] = s.split('-').map(Number);
+        const t = new Date(); t.setHours(0, 0, 0, 0);
+        return Math.round((t - new Date(y, m - 1, d)) / 86400000);
     }
-    origFC(id, v);
-  };
 
-  handleHarvestSubmit = function (event) {
-    event.preventDefault();
-    const dateVal = document.getElementById('harvestDate').value;
-    const kgVal = parseFloat(document.getElementById('harvestKg').value);
-    const priceEl = document.getElementById('harvestPrice');
-    const price = priceEl ? parseFloat(priceEl.value) : 0;
-    const notesEl = document.getElementById('harvestNotes');
-    const notes = notesEl ? notesEl.value.trim() : '';
-    if (!dateVal || isNaN(kgVal) || kgVal <= 0) { alert(x('invalid')); return; }
-    farmData.harvests.unshift({
-      id: Date.now().toString(), date: dateVal, kg: kgVal,
-      price: isNaN(price) ? 0 : price, notes: notes || x('fresh')
+    document.addEventListener('DOMContentLoaded', () => {
+        // වගා ස්ථාන තෝරන කොටුව සකස් කිරීම
+        const sel = $('weatherCitySelect');
+        sel.innerHTML = Object.keys(coords).map(k => '<option value="' + k + '">' + coords[k].name + '</option>').join('');
+        sel.value = 'monaragala';
+        sel.onchange = () => { saveData(); fetchWeather(); };
+        const lbl = document.querySelector('label[for="weatherCitySelect"]');
+        if (lbl) lbl.textContent = 'වගා ස්ථානය තෝරන්න:';
+
+        // නම් ටයිප් කරන විටම සුරැකීම
+        ['prod_npk', 'prod_fungicide', 'prod_hormone'].forEach(id => $(id).addEventListener('input', updateAll));
+
+        $('harvestDate').value = todayStr();
+        loadData();
+        updateAll();
+        renderHarvests();
+        fetchWeather();
     });
-    saveData();
-    document.getElementById('harvestKg').value = '';
-    // keep price: harvest price field is intentionally NOT cleared
-    if (notesEl) notesEl.value = '';
-    setDateFieldToday('harvestDate');
-    renderHarvests();
-  };
 
-  renderHarvests = function () {
-    const tb = document.getElementById('harvestTableBody');
-    const empty = document.getElementById('harvestEmptyState');
-    const H = farmData.harvests || [];
-    if (!tb) return;
-    tb.innerHTML = '';
-    let tk = 0, tv = 0, pricedKg = 0;
-    const sorted = [...H].sort((a, b) => new Date(b.date) - new Date(a.date));
-    sorted.forEach((it, i) => {
-      const kg = Number(it.kg), p = Number(it.price) || 0;
-      tk += kg; tv += kg * p; if (p) pricedKg += kg;
-      const tr = document.createElement('tr');
-      tr.innerHTML =
-        '<td style="color:var(--text-muted);font-size:.78rem">' + (sorted.length - i) + '</td>' +
-        '<td style="font-weight:600">' + formatDateDisplay(it.date) + '</td>' +
-        '<td><span class="weight-badge">' + kg.toFixed(2) + ' kg</span></td>' +
-        '<td>' + (p ? 'රු. ' + fmt(p) : '-') + '</td>' +
-        '<td style="font-weight:700;color:#fbbf24">' + (p ? 'රු. ' + fmt(kg * p) : '-') + '</td>' +
-        '<td style="color:var(--text-muted)">' + (esc(it.notes) || '-') + '</td>' +
-        '<td style="text-align:right"><button class="btn-delete" onclick="deleteHarvest(\'' + it.id + '\')">🗑</button></td>';
-      tb.appendChild(tr);
-    });
-    if (empty) empty.style.display = H.length ? 'none' : 'block';
-    const sessionEl = document.getElementById('tableSessionCount');
-    if (sessionEl) sessionEl.textContent = H.length;
-    const kpiYield = document.getElementById('kpiTotalYield');
-    if (kpiYield) kpiYield.innerHTML = tk.toFixed(2) +
-      ' <span style="font-size:1rem;font-weight:normal;color:var(--text-muted)">kg</span>';
-    const kpiCount = document.getElementById('kpiHarvestCount');
-    if (kpiCount) kpiCount.textContent = H.length
-      ? H.length + ' ' + x('sessions') + ' (Avg ' + (tk / H.length).toFixed(1) + ' kg)' : t('kpiHarvestCountEmpty');
-    const revEl = document.getElementById('xKpiRev');
-    if (revEl) revEl.textContent = 'රු. ' + fmt(tv);
-    const revSub = document.getElementById('xKpiRevSub');
-    if (revSub) revSub.textContent = pricedKg ? x('kpiRevSub') + fmt(tv / pricedKg) + ' / kg' : '—';
-  };
+    function saveData() {
+        farmData.plantingDate = $('plantingDate').value;
+        farmData.lastFertilizer = $('lastFertilizer').value;
+        farmData.lastFungicide = $('lastFungicide').value;
+        farmData.lastHormone = $('lastHormone').value;
+        farmData.prodNpk = $('prod_npk').value;
+        farmData.prodFungicide = $('prod_fungicide').value;
+        farmData.prodHormone = $('prod_hormone').value;
+        farmData.weatherCity = $('weatherCitySelect').value;
+        try { localStorage.setItem('naiMirisFarmData', JSON.stringify(farmData)); } catch (e) { console.error(e); }
+    }
 
-  exportCsv = function () {
-    if (!farmData.harvests || !farmData.harvests.length) { alert(t('alertNoExport')); return; }
-    let csv = 'ID,Date,Weight_kg,Price_per_kg,Value,Notes\n';
-    farmData.harvests.forEach(h => {
-      const p = Number(h.price) || 0;
-      csv += '"' + h.id + '","' + h.date + '",' + h.kg + ',' + p + ',' + (h.kg * p).toFixed(2) +
-        ',"' + (h.notes || '').replace(/"/g, '""') + '"\n';
-    });
-    csv += '\nDate,Type,Product\n';
-    (farmData.applog || []).forEach(a => {
-      csv += '"' + a.date + '","' + a.type + '","' + (a.name || '').replace(/"/g, '""') + '"\n';
-    });
-    const link = document.createElement('a');
-    link.href = URL.createObjectURL(new Blob(['\ufeff' + csv], { type: 'text/csv;charset=utf-8;' }));
-    link.download = 'Nai_Miris_Harvest_' + getTodayString() + '.csv';
-    document.body.appendChild(link); link.click(); document.body.removeChild(link);
-  };
+    function loadData() {
+        try {
+            const saved = localStorage.getItem('naiMirisFarmData');
+            if (saved) farmData = Object.assign(farmData, JSON.parse(saved));
+        } catch (e) { console.error(e); }
+        if (!Array.isArray(farmData.harvests)) farmData.harvests = [];
+        if (!coords[farmData.weatherCity]) farmData.weatherCity = 'monaragala';
 
-  const origSync = syncInputsFromState;
-  syncInputsFromState = function () {
-    ensure();
-    origSync();
-    Object.keys(DK).forEach(k => {
-      const inp = document.getElementById('prod_' + k);
-      if (inp) inp.value = farmData.products[k] || '';
-    });
-  };
+        $('plantingDate').value = farmData.plantingDate || '';
+        $('lastFertilizer').value = farmData.lastFertilizer || '';
+        $('lastFungicide').value = farmData.lastFungicide || '';
+        $('lastHormone').value = farmData.lastHormone || '';
+        $('prod_npk').value = farmData.prodNpk || '';
+        $('prod_fungicide').value = farmData.prodFungicide || '';
+        $('prod_hormone').value = farmData.prodHormone || '';
+        $('weatherCitySelect').value = farmData.weatherCity;
+    }
 
-  const origRenderAll = renderAll;
-  renderAll = function () { origRenderAll(); renderLog(); };
+    // මතක් කිරීම් ගොඩනැගීම: තව දවස් 2 / හෙට / අද / පමා
+    function reminderFor(name, days, cycle) {
+        const rem = cycle - days;
+        if (rem < 0) return '<div class="reminder-box danger-reminder">🚨 <b>අවධානයයි:</b> ' + esc(name) + ' යෙදීම දවස් ' + (-rem) + 'ක් ප්‍රමාදයි! (චක්‍රය දින ' + cycle + ')</div>';
+        if (rem === 0) return '<div class="reminder-box danger-reminder">🚨 <b>අද යෙදිය යුතුයි:</b> ' + esc(name) + ' (දින ' + cycle + 'ක චක්‍රය සම්පූර්ණයි)</div>';
+        if (rem === 1) return '<div class="reminder-box">⚠️ <b>හෙට යෙදිය යුතුයි:</b> ' + esc(name) + '</div>';
+        if (rem === 2) return '<div class="reminder-box">⚠️ <b>මතක් කිරීමයි:</b> ' + esc(name) + ' යෙදීමට තව දවස් 2යි.</div>';
+        return '';
+    }
 
-  const origUL = updateLanguageUI;
-  updateLanguageUI = function () {
-    origUL();
-    const set = (id, txt) => { const el = document.getElementById(id); if (el) el.textContent = txt; };
-    Object.keys(DK).forEach(k => {
-      set('lblProd_' + k, x('prodLabel'));
-      const inp = document.getElementById('prod_' + k);
-      if (inp) inp.placeholder = x('prodPh');
-    });
-    set('xLblPrice', x('priceLabel'));
-    const hp = document.getElementById('harvestPrice');
-    if (hp) hp.placeholder = x('pricePh');
-    set('xLogTitle', x('logTitle'));
-    set('xLogTag', x('logTag'));
-    set('xThDate', t('thDate'));
-    set('xThType', x('thType'));
-    set('xThName', x('thName'));
-    set('xThPrice', x('thPrice'));
-    set('xThValue', x('thValue'));
-    set('xKpiRevLbl', x('kpiRev'));
-  };
+    function updateAll() {
+        saveData();
 
-  /* ---------- Boot (runs after the main script's own init) ---------- */
-  function boot() {
-    ensure();
-    updateLanguageUI();
-    syncInputsFromState();
-    renderAll();
-  }
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', () => setTimeout(boot, 0));
-  } else {
-    boot();
-  }
-})();
+        const pDays = daysSince($('plantingDate').value);
+        $('totalDays').innerText = pDays !== null ? Math.max(0, pDays) : 0;
+
+        let statusText = '', remindersText = '';
+        const items = [
+            { date: $('lastFertilizer').value, name: $('prod_npk').value.trim() || 'NPK පොහොර', cycle: CYCLE.npk },
+            { date: $('lastFungicide').value, name: $('prod_fungicide').value.trim() || 'දිලීර නාශක', cycle: CYCLE.fungicide },
+            { date: $('lastHormone').value, name: $('prod_hormone').value.trim() || 'හෝමෝන', cycle: CYCLE.hormone }
+        ];
+        items.forEach(it => {
+            const days = daysSince(it.date);
+            if (days === null || days < 0) return;
+            statusText += '• <b>' + esc(it.name) + '</b> යොදා දැනට <b>' + days + '</b> දවස් වී ඇත. (චක්‍රය දින ' + it.cycle + ')<br>';
+            remindersText += reminderFor(it.name, days, it.cycle);
+        });
+
+        $('actionStatus').innerHTML = statusText || 'දිනයන් සහ භාවිත කළ ද්‍රව්‍ය ඇතුළත් කරන්න.';
+        $('reminderContainer').innerHTML = remindersText || 'සක්‍රීය මතක් කිරීම් නොමැත.';
+    }
+
+    function addHarvest() {
+        const hDate = $('harvestDate').value;
+        const hAmount = parseFloat($('harvestAmount').value);
+        const hPrice = parseFloat($('harvestPrice').value) || 0;
+        const hNotes = $('harvestNotes').value.trim();
+
+        if (!hDate || isNaN(hAmount) || hAmount <= 0) {
+            alert('කරුණාකර නිවැරදි දිනයක් සහ බරක් (kg) ඇතුළත් කරන්න!');
+            return;
+        }
+        farmData.harvests.push({ id: Date.now().toString(), date: hDate, amount: hAmount, price: hPrice, notes: hNotes });
+        saveData();
+        renderHarvests();
+        $('harvestAmount').value = '';
+        $('harvestPrice').value = '';
+        $('harvestNotes').value = '';
+    }
+
+    function deleteHarvest(id) {
+        farmData.harvests = farmData.harvests.filter(item => item.id !== id);
+        saveData();
+        renderHarvests();
+    }
+
+    function renderHarvests() {
+        const tbody = $('harvestTableBody');
+        tbody.innerHTML = '';
+        let totalKg = 0, totalRev = 0;
+        const sorted = [...farmData.harvests].sort((a, b) => new Date(b.date) - new Date(a.date));
+
+        sorted.forEach(item => {
+            const amount = Number(item.amount), price = Number(item.price) || 0;
+            const val = amount * price;
+            totalKg += amount; totalRev += val;
+            const tr = document.createElement('tr');
+            tr.innerHTML =
+                '<td>' + esc(item.date) + '</td>' +
+                '<td><b>' + amount.toFixed(2) + ' kg</b></td>' +
+                '<td>' + (price ? money(price) : '-') + '</td>' +
+                '<td style="color:#d97706;font-weight:bold;">' + (val ? money(val) : '-') + '</td>' +
+                '<td>' + (esc(item.notes) || '-') + '</td>' +
+                '<td style="text-align:right;"><button class="btn-delete" onclick="deleteHarvest(\'' + item.id + '\')">🗑</button></td>';
+            tbody.appendChild(tr);
+        });
+
+        $('totalHarvestKg').innerText = totalKg.toFixed(2);
+        $('totalRevenueRs').innerText = money(totalRev);
+        updateAnalytics();
+    }
+
+    function updateAnalytics() {
+        const H = farmData.harvests || [];
+        const tbody = $('monthlySummaryBody');
+
+        if (harvestChart) { harvestChart.destroy(); harvestChart = null; }
+        if (!H.length) {
+            tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;">දත්ත නොමැත.</td></tr>';
+            return;
+        }
+        const sorted = [...H].sort((a, b) => new Date(a.date) - new Date(b.date));
+
+        // 1. ප්‍රස්ථාරය (Chart.js load වී ඇත්නම් පමණක්)
+        const ctx = $('harvestTrendsChart');
+        if (ctx && typeof Chart !== 'undefined') {
+            harvestChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: sorted.map(i => i.date),
+                    datasets: [
+                        { type: 'line', label: '1 kg මිල (රු.)', data: sorted.map(i => Number(i.price) || 0), borderColor: '#ef4444', borderWidth: 3, yAxisID: 'yPrice' },
+                        { type: 'bar', label: 'අස්වැන්න (kg)', data: sorted.map(i => Number(i.amount)), backgroundColor: 'rgba(46, 125, 50, 0.75)', yAxisID: 'yWeight' }
+                    ]
+                },
+                options: {
+                    responsive: true, maintainAspectRatio: false,
+                    scales: {
+                        yWeight: { type: 'linear', position: 'left', beginAtZero: true },
+                        yPrice: { type: 'linear', position: 'right', beginAtZero: true, grid: { drawOnChartArea: false } }
+                    }
+                }
+            });
+        }
+
+        // 2. මාසික සාරාංශය
+        const monthly = {};
+        sorted.forEach(item => {
+            const m = item.date.substring(0, 7);
+            if (!monthly[m]) monthly[m] = { count: 0, kg: 0, val: 0 };
+            monthly[m].count++;
+            monthly[m].kg += Number(item.amount);
+            monthly[m].val += Number(item.amount) * (Number(item.price) || 0);
+        });
+        tbody.innerHTML = '';
+        Object.keys(monthly).sort().reverse().forEach(m => {
+            const d = monthly[m];
+            const avg = d.kg ? d.val / d.kg : 0;
+            tbody.innerHTML +=
+                '<tr><td><b>' + m + '</b></td><td>' + d.count + ' වාරයක්</td>' +
+                '<td><b>' + d.kg.toFixed(2) + ' kg</b></td>' +
+                '<td>' + (avg ? money(avg) : '-') + '</td>' +
+                '<td style="text-align:right;font-weight:bold;color:#d97706;">' + (d.val ? money(d.val) : '-') + '</td></tr>';
+        });
+    }
+
+    // කාලගුණය
+    async function fetchWeather() {
+        const loc = coords[$('weatherCitySelect').value] || coords.monaragala;
+        $('weatherUpdateStatus').textContent = 'කාලගුණ දත්ත ලබා ගනිමින් පවතී...';
+        try {
+            const res = await fetch('https://api.open-meteo.com/v1/forecast?latitude=' + loc.lat + '&longitude=' + loc.lon +
+                '&current=temperature_2m,relative_humidity_2m,precipitation');
+            if (!res.ok) throw new Error('HTTP ' + res.status);
+            const data = await res.json();
+            if (data && data.current) {
+                $('tempVal').textContent = data.current.temperature_2m + ' °C';
+                $('rainVal').textContent = data.current.precipitation + ' mm';
+                $('humidityVal').textContent = data.current.relative_humidity_2m + ' %';
+                $('rainIcon').textContent = data.current.precipitation > 0 ? '🌧️' : '☀️';
+                $('weatherUpdateStatus').textContent = loc.name + ' සඳහා සජීවී කාලගුණ දත්ත ලබාගන්නා ලදී.';
+            }
+        } catch (e) {
+            $('weatherUpdateStatus').textContent = 'කාලගුණ දත්ත ලබාගැනීමට අපොහොසත් විය. (අන්තර්ජාල සම්බන්ධතාව පරීක්ෂා කරන්න)';
+        }
+    }
 </script>
