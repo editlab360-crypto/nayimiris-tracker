@@ -1,3 +1,347 @@
+<!DOCTYPE html>
+<html lang="si">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>නයි මිරිස් වගා කළමනාකරණ පද්ධතිය</title>
+    <!-- Chart.js Library for Harvest & Price Chart -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        :root {
+            --primary: #2e7d32;
+            --secondary: #81c784;
+            --bg: #f8fafc;
+            --card-bg: #ffffff;
+            --text: #1e293b;
+            --muted: #64748b;
+            --alert-bg: #fff3e0;
+            --alert-border: #ffb74d;
+            --danger-bg: #ffebee;
+            --danger-border: #ef5350;
+            --water-blue: #0284c7;
+        }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg);
+            color: var(--text);
+            margin: 0;
+            padding: 15px;
+        }
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+        }
+        h1 {
+            text-align: center;
+            color: var(--primary);
+            font-size: 1.6rem;
+            margin-bottom: 5px;
+        }
+        .subtitle {
+            text-align: center;
+            color: var(--muted);
+            font-size: 0.9rem;
+            margin-bottom: 20px;
+        }
+        .card {
+            background: var(--card-bg);
+            border-radius: 12px;
+            padding: 18px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);
+            border: 1px solid #e2e8f0;
+        }
+        .card h2 {
+            margin-top: 0;
+            color: var(--primary);
+            font-size: 1.15rem;
+            border-bottom: 2px solid var(--secondary);
+            padding-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .form-group {
+            margin-bottom: 14px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 600;
+            font-size: 0.88rem;
+        }
+        input, select {
+            width: 100%;
+            padding: 9px;
+            border: 1px solid #cbd5e1;
+            border-radius: 6px;
+            box-sizing: border-box;
+            font-size: 0.95rem;
+            background-color: #fff;
+        }
+        button {
+            background-color: var(--primary);
+            color: white;
+            border: none;
+            padding: 11px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: bold;
+            width: 100%;
+            transition: background 0.2s;
+        }
+        button:hover {
+            background-color: #1b5e20;
+        }
+        .btn-water {
+            background-color: var(--water-blue);
+        }
+        .btn-water:hover {
+            background-color: #0369a1;
+        }
+        .stats-box {
+            background: #e8f5e9;
+            padding: 12px;
+            border-radius: 6px;
+            margin-top: 10px;
+            font-size: 1rem;
+            font-weight: bold;
+            color: var(--primary);
+            text-align: center;
+        }
+        .reminder-box {
+            background-color: var(--alert-bg);
+            border-left: 4px solid var(--alert-border);
+            padding: 10px;
+            margin-bottom: 8px;
+            border-radius: 4px;
+            font-size: 0.9rem;
+        }
+        .danger-reminder {
+            background-color: var(--danger-bg);
+            border-left: 4px solid var(--danger-border);
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+        }
+        th, td {
+            border: 1px solid #e2e8f0;
+            padding: 9px;
+            text-align: left;
+            font-size: 0.88rem;
+        }
+        th {
+            background-color: #f1f8e9;
+            color: var(--primary);
+            font-weight: 700;
+        }
+        .btn-delete {
+            background: #ef4444;
+            color: white;
+            border: none;
+            padding: 4px 8px;
+            border-radius: 4px;
+            cursor: pointer;
+            width: auto;
+            font-size: 0.8rem;
+        }
+        .grid-2 {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 12px;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>🌶️ නයි මිරිස් වගා කළමනාකරණ පද්ධතිය</h1>
+    <div class="subtitle">ජලය සැපයීම, පැළ, පොහොර, බෙහෙත්, අස්වනු, ආදායම හා කාලගුණය</div>
+
+    <!-- 1. වතුර දීමේ සටහන (Watering Tracker) -->
+    <div class="card" style="border-left: 5px solid var(--water-blue);">
+        <h2 style="color: var(--water-blue); border-bottom-color: #7dd3fc;">💧 වගාවට වතුර දීමේ සටහන (Watering Schedule)</h2>
+        
+        <div style="background: #e0f2fe; padding: 12px; border-radius: 8px; margin-bottom: 15px; text-align: center;">
+            <div style="font-size: 0.9rem; color: #0369a1;">අවසානයට වතුර යෙදූ දිනය සහ වේලාව:</div>
+            <div style="font-size: 1.2rem; font-weight: bold; color: #0c4a6e; margin-top: 4px;" id="lastWaterStatus">තවම ඇතුළත් කර නොමැත</div>
+        </div>
+
+        <div class="grid-2" style="margin-bottom: 12px;">
+            <button class="btn-water" onclick="recordWatering('උදේ')">☀️ අද උදේ වතුර දුන්නා</button>
+            <button class="btn-water" style="background-color: #0284c7;" onclick="recordWatering('සවස')">🌙 අද සවස වතුර දුන්නා</button>
+        </div>
+
+        <div style="border-top: 1px dashed #cbd5e1; padding-top: 10px; margin-top: 10px;">
+            <label style="font-size: 0.85rem; color: var(--muted);">වෙනත් දිනයක / වේලාවක වතුර යෙදූ බව ඇතුළත් කිරීමට:</label>
+            <div class="grid-2">
+                <input type="date" id="manualWaterDate">
+                <select id="manualWaterTime">
+                    <option value="උදේ">උදේ (Morning)</option>
+                    <option value="සවස">සවස (Evening)</option>
+                </select>
+            </div>
+            <button onclick="recordManualWatering()" style="margin-top: 8px; background-color: #38bdf8;">වෙනත් දිනයක වතුර යෙදීම සටහන් කරන්න</button>
+        </div>
+    </div>
+
+    <!-- 2. වගා කළ දිනය -->
+    <div class="card">
+        <h2>🌱 වගා කළ / පැළ හිටෙව්ව දිනය</h2>
+        <div class="form-group">
+            <input type="date" id="plantingDate">
+        </div>
+        <div class="stats-box">
+            වගාවට ගත වූ මුළු දවස් ගණන: <span id="totalDays">0</span> ක්
+        </div>
+    </div>
+
+    <!-- 3. මතක් කිරීම් -->
+    <div class="card">
+        <h2>⏰ විශේෂ මතක් කිරීම් (Reminders)</h2>
+        <div id="reminderContainer">සක්‍රීය මතක් කිරීම් නොමැත.</div>
+    </div>
+
+    <!-- 4. පොහොර හා බෙහෙත් යෙදීම -->
+    <div class="card" id="cardSchedule">
+        <h2>🧪 පොහොර, දිලීර නාශක සහ හෝමෝන යෙදීම</h2>
+        
+        <div style="border-bottom: 1px solid #e2e8f0; padding-bottom: 12px; margin-bottom: 12px;">
+            <label style="color:var(--primary);"><strong>1. NPK පොහොර:</strong></label>
+            <div class="grid-2">
+                <input type="text" id="prod_npk" placeholder="භාවිත කළ පොහොර නම (උදා: NPK 15-15-15)">
+                <input type="date" id="lastFertilizer">
+            </div>
+        </div>
+
+        <div style="border-bottom: 1px solid #e2e8f0; padding-bottom: 12px; margin-bottom: 12px;">
+            <label style="color:var(--primary);"><strong>2. දිලීර / පළිබෝධ නාශක:</strong></label>
+            <div class="grid-2">
+                <input type="text" id="prod_fungicide" placeholder="වෙළඳ නාමය (උදා: Mancozeb, Abamectin)">
+                <input type="date" id="lastFungicide">
+            </div>
+        </div>
+
+        <div>
+            <label style="color:var(--primary);"><strong>3. හෝමෝන වර්ග:</strong></label>
+            <div class="grid-2">
+                <input type="text" id="prod_hormone" placeholder="භාවිත කළ හෝමෝන නම">
+                <input type="date" id="lastHormone">
+            </div>
+        </div>
+
+        <div id="actionStatus" style="font-size: 0.9rem; margin-top: 15px; line-height: 1.6; background: #f8fafc; padding: 10px; border-radius: 6px;"></div>
+    </div>
+
+    <!-- 5. අස්වනු සහ ආදායම් වාර්තාව -->
+    <div class="card" id="cardHarvest">
+        <h2>📦 අස්වනු නෙළීම සහ ආදායම (Harvest & Revenue)</h2>
+        <div class="grid-2">
+            <div class="form-group">
+                <label>අස්වැන්න නෙළූ දිනය:</label>
+                <input type="date" id="harvestDate">
+            </div>
+            <div class="form-group">
+                <label>ප්‍රමාණය (kg):</label>
+                <input type="number" id="harvestAmount" step="0.1" placeholder="උදා: 2.5">
+            </div>
+        </div>
+        <div class="grid-2">
+            <div class="form-group">
+                <label>1 kg විකුණුම් මිල (රු.):</label>
+                <input type="number" id="harvestPrice" step="0.01" placeholder="උදා: 450">
+            </div>
+            <div class="form-group">
+                <label>සටහන් (Notes):</label>
+                <input type="text" id="harvestNotes" placeholder="උදා: පළමු මුරය">
+            </div>
+        </div>
+        <button onclick="addHarvest()">අස්වැන්න ඇතුළත් කරන්න</button>
+
+        <div style="margin-top: 20px;">
+            <div style="display: flex; justify-content: space-between; flex-wrap: wrap; background: #f1f8e9; padding: 12px; border-radius: 8px; margin-bottom: 15px;">
+                <div><strong>මුළු අස්වැන්න: <span id="totalHarvestKg" style="color:var(--primary);">0.0</span> kg</strong></div>
+                <div><strong>මුළු ආදායම: <span id="totalRevenueRs" style="color:#d97706;">රු. 0.00</span></strong></div>
+            </div>
+
+            <div style="overflow-x: auto;">
+                <table id="harvestTable">
+                    <thead>
+                        <tr>
+                            <th>දිනය</th>
+                            <th>බර (kg)</th>
+                            <th>1 kg මිල (රු.)</th>
+                            <th>වටිනාකම (රු.)</th>
+                            <th>සටහන</th>
+                            <th style="text-align:right;">ඉවත් කරන්න</th>
+                        </tr>
+                    </thead>
+                    <tbody id="harvestTableBody"></tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Chart Section -->
+        <div style="margin-top: 25px; background: #ffffff; padding: 15px; border-radius: 8px; border: 1px solid #e2e8f0;">
+            <h3 style="color: var(--primary); margin-top: 0; font-size: 1.05rem;">📊 අස්වනු ප්‍රමාණය සහ මිල වෙනස්වීමේ ප්‍රස්ථාරය</h3>
+            <div style="position: relative; height: 280px; width: 100%;">
+                <canvas id="harvestTrendsChart"></canvas>
+            </div>
+        </div>
+
+        <!-- Monthly Summary Table -->
+        <div style="margin-top: 20px;">
+            <h3 style="color: var(--text); font-size: 1rem;">📅 මාසික අස්වනු සහ ආදායම් සාරාංශය</h3>
+            <div style="overflow-x: auto;">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>මාසය</th>
+                            <th>වාර ගණන</th>
+                            <th>මුළු බර (kg)</th>
+                            <th>සාමාන්‍ය මිල (රු./kg)</th>
+                            <th style="text-align:right;">මුළු ආදායම (රු.)</th>
+                        </tr>
+                    </thead>
+                    <tbody id="monthlySummaryBody"></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- 6. කාලගුණ තත්ත්වය (Weather Widget) -->
+    <div class="card">
+        <h2>🌦️ වගා බිමේ කාලගුණ තත්ත්වය (Live Weather)</h2>
+        <div style="display: flex; gap: 10px; margin-bottom: 15px; flex-wrap: wrap; align-items: center;">
+            <label for="weatherCitySelect" style="font-weight: 600;">වගා ස්ථානය තෝරන්න:</label>
+            <select id="weatherCitySelect" style="width: auto; flex-grow: 1;"></select>
+            <button onclick="fetchWeather()" style="width: auto; padding: 9px 15px;">යාවත්කාලීන කරන්න</button>
+        </div>
+
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px;">
+            <div style="background: #f8fafc; padding: 12px; border-radius: 8px; border: 1px solid #e2e8f0; text-align: center;">
+                <div style="font-size: 1.8rem;">🌡️</div>
+                <div style="font-size: 0.8rem; color: var(--muted);">උෂ්ණත්වය</div>
+                <div style="font-size: 1.2rem; font-weight: bold;" id="tempVal">-- °C</div>
+            </div>
+            <div style="background: #f8fafc; padding: 12px; border-radius: 8px; border: 1px solid #e2e8f0; text-align: center;">
+                <div style="font-size: 1.8rem;" id="rainIcon">🌧️</div>
+                <div style="font-size: 0.8rem; color: var(--muted);">වර්ෂාපතනය</div>
+                <div style="font-size: 1.2rem; font-weight: bold;" id="rainVal">-- mm</div>
+            </div>
+            <div style="background: #f8fafc; padding: 12px; border-radius: 8px; border: 1px solid #e2e8f0; text-align: center;">
+                <div style="font-size: 1.8rem;">💧</div>
+                <div style="font-size: 0.8rem; color: var(--muted);">ආර්ද්‍රතාවය</div>
+                <div style="font-size: 1.2rem; font-weight: bold;" id="humidityVal">-- %</div>
+            </div>
+        </div>
+        <div style="font-size: 0.75rem; color: var(--muted); text-align: right; margin-top: 8px;" id="weatherUpdateStatus">දත්ත ලබාගනිමින් පවතී...</div>
+    </div>
+</div>
+
 <script>
 let harvestChart = null;
 let farmData = {
@@ -49,262 +393,5 @@ document.addEventListener('DOMContentLoaded', () => {
     const lbl = document.querySelector('label[for="weatherCitySelect"]');
     if (lbl) lbl.textContent = 'වගා ස්ථානය තෝරන්න:';
 
-    // දිනයන් සහ නම් වෙනස් වන විටම යාවත්කාලීන කිරීම
     ['plantingDate', 'lastFertilizer', 'lastFungicide', 'lastHormone'].forEach(id => {
-        if ($(id)) $(id).addEventListener('change', updateAll);
-    });
-    ['prod_npk', 'prod_fungicide', 'prod_hormone'].forEach(id => {
-        if ($(id)) $(id).addEventListener('input', updateAll);
-    });
-
-    if ($('harvestDate')) $('harvestDate').value = todayStr();
-    if ($('manualWaterDate')) $('manualWaterDate').value = todayStr();
-
-    loadData();
-    updateAll();
-    renderHarvests();
-    fetchWeather();
-});
-
-function saveData() {
-    farmData.plantingDate    = val('plantingDate');
-    farmData.lastFertilizer  = val('lastFertilizer');
-    farmData.lastFungicide   = val('lastFungicide');
-    farmData.lastHormone     = val('lastHormone');
-    farmData.prodNpk         = val('prod_npk');
-    farmData.prodFungicide   = val('prod_fungicide');
-    farmData.prodHormone     = val('prod_hormone');
-    farmData.weatherCity     = val('weatherCitySelect') || farmData.weatherCity;
-    try { localStorage.setItem('naiMirisFarmData', JSON.stringify(farmData)); } catch (e) { console.warn('Storage unavailable', e); }
-}
-
-function loadData() {
-    try {
-        const saved = localStorage.getItem('naiMirisFarmData');
-        if (saved) farmData = Object.assign(farmData, JSON.parse(saved));
-    } catch (e) { console.warn(e); }
-    if (!Array.isArray(farmData.harvests)) farmData.harvests = [];
-    if (!coords[farmData.weatherCity]) farmData.weatherCity = 'monaragala';
-
-    const set = (id, v) => { if ($(id)) $(id).value = v || ''; };
-    set('plantingDate', farmData.plantingDate);
-    set('lastFertilizer', farmData.lastFertilizer);
-    set('lastFungicide', farmData.lastFungicide);
-    set('lastHormone', farmData.lastHormone);
-    set('prod_npk', farmData.prodNpk);
-    set('prod_fungicide', farmData.prodFungicide);
-    set('prod_hormone', farmData.prodHormone);
-    set('weatherCitySelect', farmData.weatherCity);
-}
-
-function recordWatering(timeSlot) {
-    farmData.lastWaterDate = todayStr();
-    farmData.lastWaterTime = timeSlot;
-    updateAll();
-}
-
-function recordManualWatering() {
-    const wDate = val('manualWaterDate');
-    const wTime = val('manualWaterTime') || 'උදේ';
-    if (!wDate) { alert('කරුණාකර දිනයක් තෝරන්න!'); return; }
-    if (daysSince(wDate) < 0) { alert('අනාගත දිනයක් ඇතුළත් කළ නොහැක!'); return; }
-    farmData.lastWaterDate = wDate;
-    farmData.lastWaterTime = wTime;
-    updateAll();
-}
-
-function reminderFor(name, days, cycle) {
-    const rem = cycle - days;
-    if (rem < 0)  return '<div class="reminder-box danger-reminder">🚨 <b>අවධානයයි:</b> ' + esc(name) + ' යෙදීම දවස් ' + (-rem) + 'ක් ප්‍රමාදයි! (චක්‍රය දින ' + cycle + ')</div>';
-    if (rem === 0) return '<div class="reminder-box danger-reminder">🚨 <b>අද යෙදිය යුතුයි:</b> ' + esc(name) + ' (දින ' + cycle + 'ක චක්‍රය සම්පූර්ණයි)</div>';
-    if (rem === 1) return '<div class="reminder-box">⚠️ <b>හෙට යෙදිය යුතුයි:</b> ' + esc(name) + '</div>';
-    if (rem === 2) return '<div class="reminder-box">⚠️ <b>මතක් කිරීමයි:</b> ' + esc(name) + ' යෙදීමට තව දවස් 2යි.</div>';
-    return '';
-}
-
-function updateAll() {
-    saveData();
-
-    // 1. වතුර තත්ත්වය
-    let reminders = '';
-    const wEl = $('lastWaterStatus');
-    if (wEl) {
-        if (farmData.lastWaterDate) {
-            const wDays = daysSince(farmData.lastWaterDate);
-            const timeText = farmData.lastWaterTime ? ' (' + esc(farmData.lastWaterTime) + ')' : '';
-            if (wDays < 0) {
-                wEl.textContent = 'දිනය වැරදියි (අනාගත දිනයක්)';
-                wEl.style.color = '#ef4444';
-            } else if (wDays === 0) {
-                wEl.innerHTML = 'අද දිනයේදී' + timeText;
-                wEl.style.color = '#0284c7';
-            } else if (wDays === 1) {
-                wEl.innerHTML = 'ඊයේ දිනයේදී' + timeText;
-                wEl.style.color = '#d97706';
-            } else {
-                wEl.innerHTML = 'දින ' + wDays + ' කට පෙර (' + esc(farmData.lastWaterDate) + ')' + timeText;
-                wEl.style.color = '#ef4444';
-                reminders += '<div class="reminder-box danger-reminder">🚨 <b>අවධානයයි:</b> වගාවට වතුර යොදා දින ' + wDays + ' ක් වී ඇත! වහාම වතුර යොදන්න.</div>';
-            }
-        } else {
-            wEl.textContent = 'තවම ඇතුළත් කර නොමැත';
-            wEl.style.color = '';
-        }
-    }
-
-    // 2. වගාවට ගතවූ දවස්
-    const pDays = daysSince(val('plantingDate'));
-    setText('totalDays', pDays !== null ? Math.max(0, pDays) : 0);
-
-    // 3. පොහොර / දිලීර නාශක / හෝමෝන
-    let statusText = '';
-    const items = [
-        { date: val('lastFertilizer'), name: val('prod_npk').trim()       || 'NPK පොහොර', cycle: CYCLE.npk },
-        { date: val('lastFungicide'),  name: val('prod_fungicide').trim() || 'දිලීර නාශක', cycle: CYCLE.fungicide },
-        { date: val('lastHormone'),    name: val('prod_hormone').trim()   || 'හෝමෝන',     cycle: CYCLE.hormone }
-    ];
-
-    items.forEach(it => {
-        const days = daysSince(it.date);
-        if (days === null) return;
-        if (days < 0) {
-            statusText += '• <b>' + esc(it.name) + '</b>: දිනය අනාගතයේ ඇත, කරුණාකර පරීක්ෂා කරන්න.<br>';
-            return;
-        }
-        statusText += '• <b>' + esc(it.name) + '</b> යොදා දැනට <b>' + days + '</b> දවස් වී ඇත. (චක්‍රය දින ' + it.cycle + ')<br>';
-        reminders += reminderFor(it.name, days, it.cycle);
-    });
-
-    setHTML('actionStatus', statusText || 'දිනයන් සහ භාවිත කළ ද්‍රව්‍ය ඇතුළත් කරන්න.');
-    setHTML('reminderContainer', reminders || 'සක්‍රීය මතක් කිරීම් නොමැත.');
-}
-
-function addHarvest() {
-    const hDate = val('harvestDate');
-    const hAmount = parseFloat(val('harvestAmount'));
-    const hPrice = parseFloat(val('harvestPrice')) || 0;
-    const hNotes = val('harvestNotes').trim();
-
-    if (!hDate || isNaN(hAmount) || hAmount <= 0) {
-        alert('කරුණාකර නිවැරදි දිනයක් සහ බරක් (kg) ඇතුළත් කරන්න!');
-        return;
-    }
-    if (hPrice < 0) { alert('මිල සෘණ අගයක් විය නොහැක!'); return; }
-
-    farmData.harvests.push({ id: Date.now().toString(), date: hDate, amount: hAmount, price: hPrice, notes: hNotes });
-    saveData();
-    renderHarvests();
-    ['harvestAmount', 'harvestPrice', 'harvestNotes'].forEach(id => { if ($(id)) $(id).value = ''; });
-}
-
-function deleteHarvest(id) {
-    if (!confirm('මෙම වාර්තාව මකා දැමීමට අවශ්‍යද?')) return;
-    farmData.harvests = farmData.harvests.filter(item => item.id !== id);
-    saveData();
-    renderHarvests();
-}
-
-function renderHarvests() {
-    const tbody = $('harvestTableBody');
-    if (!tbody) return;
-    let totalKg = 0, totalRev = 0, rows = '';
-    const sorted = [...farmData.harvests].sort((a, b) => new Date(b.date) - new Date(a.date));
-
-    sorted.forEach(item => {
-        const amount = Number(item.amount), price = Number(item.price) || 0;
-        const v = amount * price;
-        totalKg += amount; totalRev += v;
-        rows +=
-            '<tr><td>' + esc(item.date) + '</td>' +
-            '<td><b>' + amount.toFixed(2) + ' kg</b></td>' +
-            '<td>' + (price ? money(price) : '-') + '</td>' +
-            '<td style="color:#d97706;font-weight:bold;">' + (v ? money(v) : '-') + '</td>' +
-            '<td>' + (esc(item.notes) || '-') + '</td>' +
-            '<td style="text-align:right;"><button class="btn-delete" onclick="deleteHarvest(\'' + esc(item.id) + '\')">🗑</button></td></tr>';
-    });
-    tbody.innerHTML = rows || '<tr><td colspan="6" style="text-align:center;">වාර්තා නොමැත.</td></tr>';
-
-    setText('totalHarvestKg', totalKg.toFixed(2));
-    setText('totalRevenueRs', money(totalRev));
-    updateAnalytics();
-}
-
-function updateAnalytics() {
-    const H = farmData.harvests || [];
-    const tbody = $('monthlySummaryBody');
-
-    if (harvestChart) { harvestChart.destroy(); harvestChart = null; }
-    if (!H.length) {
-        if (tbody) tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;">දත්ත නොමැත.</td></tr>';
-        return;
-    }
-    const sorted = [...H].sort((a, b) => new Date(a.date) - new Date(b.date));
-
-    const ctx = $('harvestTrendsChart');
-    if (ctx && typeof Chart !== 'undefined') {
-        harvestChart = new Chart(ctx, {
-            type: 'bar',
-            data: {
-                labels: sorted.map(i => i.date),
-                datasets: [
-                    { type: 'line', label: '1 kg මිල (රු.)', data: sorted.map(i => Number(i.price) || 0), borderColor: '#ef4444', borderWidth: 3, yAxisID: 'yPrice' },
-                    { type: 'bar', label: 'අස්වැන්න (kg)', data: sorted.map(i => Number(i.amount)), backgroundColor: 'rgba(46, 125, 50, 0.75)', yAxisID: 'yWeight' }
-                ]
-            },
-            options: {
-                responsive: true, maintainAspectRatio: false,
-                scales: {
-                    yWeight: { type: 'linear', position: 'left', beginAtZero: true },
-                    yPrice: { type: 'linear', position: 'right', beginAtZero: true, grid: { drawOnChartArea: false } }
-                }
-            }
-        });
-    }
-
-    const monthly = {};
-    sorted.forEach(item => {
-        const m = item.date.substring(0, 7);
-        if (!monthly[m]) monthly[m] = { count: 0, kg: 0, val: 0 };
-        monthly[m].count++;
-        monthly[m].kg += Number(item.amount);
-        monthly[m].val += Number(item.amount) * (Number(item.price) || 0);
-    });
-    if (tbody) {
-        tbody.innerHTML = Object.keys(monthly).sort().reverse().map(m => {
-            const d = monthly[m];
-            const avg = d.kg ? d.val / d.kg : 0;
-            return '<tr><td><b>' + esc(m) + '</b></td><td>' + d.count + ' වාරයක්</td>' +
-                '<td><b>' + d.kg.toFixed(2) + ' kg</b></td>' +
-                '<td>' + (avg ? money(avg) : '-') + '</td>' +
-                '<td style="text-align:right;font-weight:bold;color:#d97706;">' + (d.val ? money(d.val) : '-') + '</td></tr>';
-        }).join('');
-    }
-}
-
-async function fetchWeather() {
-    const loc = coords[val('weatherCitySelect')] || coords.monaragala;
-    setText('weatherUpdateStatus', 'කාලගුණ දත්ත ලබා ගනිමින් පවතී...');
-    const ctrl = new AbortController();
-    const timer = setTimeout(() => ctrl.abort(), 10000);
-    try {
-        const res = await fetch(
-            'https://api.open-meteo.com/v1/forecast?latitude=' + loc.lat + '&longitude=' + loc.lon +
-            '&current=temperature_2m,relative_humidity_2m,precipitation&timezone=auto',
-            { signal: ctrl.signal }
-        );
-        if (!res.ok) throw new Error('HTTP ' + res.status);
-        const data = await res.json();
-        if (!data || !data.current) throw new Error('No data');
-        setText('tempVal', data.current.temperature_2m + ' °C');
-        setText('rainVal', data.current.precipitation + ' mm');
-        setText('humidityVal', data.current.relative_humidity_2m + ' %');
-        setText('rainIcon', data.current.precipitation > 0 ? '🌧️' : '☀️');
-        setText('weatherUpdateStatus', loc.name + ' සඳහා සජීවී කාලගුණ දත්ත ලබාගන්නා ලදී.');
-    } catch (e) {
-        ['tempVal', 'rainVal', 'humidityVal'].forEach(id => setText(id, '-'));
-        setText('weatherUpdateStatus', 'කාලගුණ දත්ත ලබාගැනීමට අපොහොසත් විය. (අන්තර්ජාල සම්බන්ධතාව පරීක්ෂා කරන්න)');
-    } finally {
-        clearTimeout(timer);
-    }
-}
-</script>
+        if ($(id))
