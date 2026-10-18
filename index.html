@@ -1,1 +1,2535 @@
+<!DOCTYPE html>
+<html lang="si">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Scotch Bonnet (Nai Miris) Chili Farm Manager | නයි මිරිස් වගා පාලන පුවරුව</title>
+  <meta name="description" content="Scotch Bonnet / Nai Miris chili precision farm management system. Bilingual (Sinhala & English) crop age tracker, fertilizer/fungicide/hormone intervals, dynamic reminders, and daily harvest logs.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Noto+Sans+Sinhala:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+  <style>
+    :root {
+      --bg-base: #08110b;
+      --bg-surface: #0e1d13;
+      --bg-elevated: #14281b;
+      --bg-card: rgba(16, 32, 22, 0.82);
+      --bg-card-hover: rgba(22, 44, 30, 0.92);
+      
+      --border-subtle: rgba(52, 211, 153, 0.16);
+      --border-focus: #10b981;
+      
+      --chili-red: #ff3b30;
+      --chili-red-dark: #dc2626;
+      --chili-amber: #f59e0b;
+      --chili-orange: #ea580c;
+      --brand-green: #10b981;
+      --brand-green-light: #34d399;
+      --brand-green-dark: #065f46;
+      
+      --text-main: #f0fdf4;
+      --text-muted: #94a3b8;
+      --text-dim: #64748b;
+      
+      --radius-sm: 8px;
+      --radius-md: 14px;
+      --radius-lg: 20px;
+      --radius-full: 9999px;
+      
+      --shadow-sm: 0 4px 12px rgba(0, 0, 0, 0.35);
+      --shadow-md: 0 10px 25px -5px rgba(0, 0, 0, 0.45);
+      --font-family: 'Plus Jakarta Sans', 'Noto Sans Sinhala', system-ui, -apple-system, sans-serif;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      background: radial-gradient(circle at 12% 15%, rgba(16, 185, 129, 0.09) 0%, transparent 40%),
+                  radial-gradient(circle at 88% 22%, rgba(255, 59, 48, 0.08) 0%, transparent 45%),
+                  radial-gradient(circle at 50% 90%, rgba(245, 158, 11, 0.06) 0%, transparent 55%),
+                  var(--bg-base);
+      color: var(--text-main);
+      font-family: var(--font-family);
+      line-height: 1.5;
+      min-height: 100vh;
+      padding: 1.25rem 1rem 3.5rem;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    .container {
+      max-width: 1240px;
+      margin: 0 auto;
+    }
+
+    /* Header */
+    header {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1.25rem;
+      padding: 1.25rem 1.75rem;
+      background: var(--bg-card);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-lg);
+      margin-bottom: 1.5rem;
+      box-shadow: var(--shadow-sm);
+    }
+
+    .brand-group {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+
+    .chili-badge {
+      width: 52px;
+      height: 52px;
+      border-radius: var(--radius-md);
+      background: linear-gradient(135deg, #ff3b30, #b91c1c);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.85rem;
+      box-shadow: 0 8px 20px rgba(255, 59, 48, 0.4);
+      flex-shrink: 0;
+      animation: float 4s ease-in-out infinite;
+    }
+
+    @keyframes float {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-4px); }
+    }
+
+    .brand-titles h1 {
+      font-size: 1.45rem;
+      font-weight: 800;
+      letter-spacing: -0.01em;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+    }
+
+    .brand-titles h1 span.chili-highlight {
+      background: linear-gradient(90deg, #ff4d4d, #f59e0b);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .brand-titles p {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      font-weight: 500;
+    }
+
+    .header-actions {
+      display: flex;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 0.75rem;
+    }
+
+    /* Language Switcher Segmented Control */
+    .lang-switcher {
+      display: inline-flex;
+      background: rgba(0, 0, 0, 0.45);
+      border: 1px solid rgba(52, 211, 153, 0.35);
+      border-radius: var(--radius-full);
+      padding: 3px;
+      gap: 2px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+    }
+
+    .btn-lang {
+      background: transparent;
+      border: none;
+      color: var(--text-muted);
+      font-family: var(--font-family);
+      font-size: 0.82rem;
+      font-weight: 700;
+      padding: 0.35rem 0.85rem;
+      border-radius: var(--radius-full);
+      cursor: pointer;
+      transition: all 0.25s ease;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
+    }
+
+    .btn-lang:hover {
+      color: #fff;
+    }
+
+    .btn-lang.active {
+      background: linear-gradient(135deg, #10b981, #059669);
+      color: #fff;
+      box-shadow: 0 2px 10px rgba(16, 185, 129, 0.4);
+    }
+
+    .date-badge {
+      display: flex;
+      align-items: center;
+      gap: 0.45rem;
+      background: rgba(16, 185, 129, 0.12);
+      border: 1px solid rgba(16, 185, 129, 0.3);
+      color: var(--brand-green-light);
+      padding: 0.45rem 0.9rem;
+      border-radius: var(--radius-full);
+      font-size: 0.82rem;
+      font-weight: 600;
+    }
+
+    .btn-action {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      background: var(--bg-elevated);
+      color: var(--text-main);
+      border: 1px solid var(--border-subtle);
+      padding: 0.45rem 0.85rem;
+      border-radius: var(--radius-md);
+      font-size: 0.82rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      font-family: inherit;
+    }
+
+    .btn-action:hover {
+      background: rgba(52, 211, 153, 0.18);
+      border-color: var(--brand-green);
+      color: #fff;
+    }
+
+    .btn-action.demo-btn {
+      background: rgba(245, 158, 11, 0.15);
+      border-color: rgba(245, 158, 11, 0.4);
+      color: #fbbf24;
+    }
+    .btn-action.demo-btn:hover {
+      background: rgba(245, 158, 11, 0.25);
+      border-color: #f59e0b;
+      color: #fff;
+    }
+
+    /* Alerts / Dynamic Reminders Banner */
+    .alerts-container {
+      margin-bottom: 1.5rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+    }
+
+    .alert-card {
+      display: flex;
+      align-items: flex-start;
+      gap: 1rem;
+      padding: 1.1rem 1.4rem;
+      border-radius: var(--radius-md);
+      backdrop-filter: blur(10px);
+      box-shadow: var(--shadow-sm);
+      position: relative;
+      overflow: hidden;
+      transition: transform 0.2s ease;
+    }
+
+    .alert-card::before {
+      content: '';
+      position: absolute;
+      left: 0;
+      top: 0;
+      bottom: 0;
+      width: 5px;
+    }
+
+    .alert-card.urgent {
+      background: linear-gradient(90deg, rgba(255, 59, 48, 0.18), rgba(255, 59, 48, 0.05));
+      border: 1px solid rgba(255, 59, 48, 0.45);
+    }
+    .alert-card.urgent::before {
+      background: var(--chili-red);
+      box-shadow: 0 0 10px var(--chili-red);
+    }
+
+    .alert-card.warning {
+      background: linear-gradient(90deg, rgba(245, 158, 11, 0.18), rgba(245, 158, 11, 0.05));
+      border: 1px solid rgba(245, 158, 11, 0.45);
+    }
+    .alert-card.warning::before {
+      background: var(--chili-amber);
+      box-shadow: 0 0 10px var(--chili-amber);
+    }
+
+    .alert-card.info {
+      background: linear-gradient(90deg, rgba(16, 185, 129, 0.15), rgba(16, 185, 129, 0.04));
+      border: 1px solid rgba(16, 185, 129, 0.3);
+    }
+    .alert-card.info::before {
+      background: var(--brand-green);
+    }
+
+    .alert-icon {
+      font-size: 1.4rem;
+      flex-shrink: 0;
+      line-height: 1;
+      padding-top: 2px;
+    }
+
+    .alert-content {
+      flex: 1;
+    }
+
+    .alert-title {
+      font-size: 0.95rem;
+      font-weight: 700;
+      margin-bottom: 0.2rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+    }
+
+    .alert-card.urgent .alert-title { color: #ff8580; }
+    .alert-card.warning .alert-title { color: #fcd34d; }
+    .alert-card.info .alert-title { color: #6ee7b7; }
+
+    .alert-badge {
+      font-size: 0.72rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      padding: 0.15rem 0.5rem;
+      border-radius: var(--radius-full);
+      font-weight: 800;
+    }
+
+    .alert-card.urgent .alert-badge {
+      background: rgba(255, 59, 48, 0.3);
+      color: #fff;
+      border: 1px solid #ff3b30;
+    }
+
+    .alert-card.warning .alert-badge {
+      background: rgba(245, 158, 11, 0.3);
+      color: #fff;
+      border: 1px solid #f59e0b;
+    }
+
+    .alert-desc {
+      font-size: 0.85rem;
+      color: #d1fae5;
+      opacity: 0.92;
+    }
+
+    .pulse {
+      animation: pulseAnim 2.5s infinite;
+    }
+
+    @keyframes pulseAnim {
+      0%, 100% { opacity: 0.9; }
+      50% { opacity: 1; }
+    }
+
+    /* Dashboard Grid */
+    .dashboard-grid {
+      display: grid;
+      grid-template-columns: repeat(12, 1fr);
+      gap: 1.5rem;
+    }
+
+    /* KPI Cards */
+    .kpi-row {
+      grid-column: span 12;
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+      gap: 1rem;
+    }
+
+    .kpi-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-md);
+      padding: 1.25rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      transition: all 0.25s ease;
+      box-shadow: var(--shadow-sm);
+    }
+
+    .kpi-card:hover {
+      transform: translateY(-2px);
+      border-color: rgba(52, 211, 153, 0.35);
+      background: var(--bg-card-hover);
+    }
+
+    .kpi-info p.label {
+      font-size: 0.76rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--text-muted);
+      font-weight: 700;
+      margin-bottom: 0.3rem;
+    }
+
+    .kpi-info h3 {
+      font-size: 1.85rem;
+      font-weight: 800;
+      color: var(--text-main);
+      line-height: 1.1;
+    }
+
+    .kpi-info p.subtext {
+      font-size: 0.78rem;
+      color: var(--brand-green-light);
+      margin-top: 0.3rem;
+      font-weight: 600;
+    }
+
+    .kpi-icon-wrap {
+      width: 48px;
+      height: 48px;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.5rem;
+      flex-shrink: 0;
+    }
+
+    .kpi-icon-green { background: rgba(16, 185, 129, 0.15); color: #34d399; }
+    .kpi-icon-red { background: rgba(255, 59, 48, 0.15); color: #ff6b6b; }
+    .kpi-icon-amber { background: rgba(245, 158, 11, 0.15); color: #fbbf24; }
+    .kpi-icon-purple { background: rgba(168, 85, 247, 0.15); color: #c084fc; }
+
+    /* Panels */
+    .panel {
+      background: var(--bg-card);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-lg);
+      padding: 1.5rem;
+      box-shadow: var(--shadow-sm);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+    }
+
+    .panel-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 1.25rem;
+      padding-bottom: 0.75rem;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+    }
+
+    .panel-header h2 {
+      font-size: 1.15rem;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .panel-header .badge-tag {
+      font-size: 0.72rem;
+      background: rgba(16, 185, 129, 0.15);
+      color: var(--brand-green-light);
+      padding: 0.2rem 0.65rem;
+      border-radius: var(--radius-full);
+      font-weight: 700;
+      border: 1px solid rgba(16, 185, 129, 0.25);
+    }
+
+    /* Planting Tracker */
+    .panel-planting {
+      grid-column: span 12;
+    }
+
+    .planting-grid {
+      display: grid;
+      grid-template-columns: 340px 1fr;
+      gap: 1.5rem;
+      align-items: center;
+    }
+
+    @media (max-width: 860px) {
+      .planting-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .planting-input-box {
+      background: var(--bg-surface);
+      padding: 1.25rem;
+      border-radius: var(--radius-md);
+      border: 1px solid var(--border-subtle);
+    }
+
+    .form-group {
+      margin-bottom: 1rem;
+    }
+
+    .form-group:last-child {
+      margin-bottom: 0;
+    }
+
+    .form-group label {
+      display: block;
+      font-size: 0.8rem;
+      font-weight: 700;
+      color: var(--text-muted);
+      margin-bottom: 0.4rem;
+      letter-spacing: 0.02em;
+    }
+
+    .input-row {
+      display: flex;
+      gap: 0.5rem;
+    }
+
+    input[type="date"],
+    input[type="number"],
+    input[type="text"] {
+      width: 100%;
+      background: var(--bg-elevated);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      color: #fff;
+      padding: 0.65rem 0.9rem;
+      border-radius: var(--radius-sm);
+      font-size: 0.9rem;
+      font-family: inherit;
+      outline: none;
+      transition: all 0.2s ease;
+    }
+
+    input[type="date"]::-webkit-calendar-picker-indicator {
+      filter: invert(0.85);
+      cursor: pointer;
+    }
+
+    input:focus {
+      border-color: var(--brand-green);
+      box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.25);
+    }
+
+    .btn-today {
+      background: rgba(16, 185, 129, 0.2);
+      border: 1px solid var(--brand-green);
+      color: #a7f3d0;
+      padding: 0 0.85rem;
+      border-radius: var(--radius-sm);
+      font-size: 0.8rem;
+      font-weight: 700;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: all 0.2s;
+      font-family: inherit;
+    }
+
+    .btn-today:hover {
+      background: var(--brand-green);
+      color: #064e3b;
+    }
+
+    /* Growth Stages Timeline */
+    .stage-timeline-wrap {
+      display: flex;
+      flex-direction: column;
+      gap: 0.85rem;
+    }
+
+    .stage-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+    }
+
+    .stage-current-title {
+      font-size: 1rem;
+      font-weight: 700;
+      color: var(--text-main);
+    }
+
+    .stage-progress-bar-container {
+      height: 12px;
+      background: rgba(255, 255, 255, 0.08);
+      border-radius: var(--radius-full);
+      overflow: hidden;
+      position: relative;
+    }
+
+    .stage-progress-bar-fill {
+      height: 100%;
+      background: linear-gradient(90deg, #10b981, #f59e0b, #ff3b30);
+      width: 0%;
+      transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+      border-radius: var(--radius-full);
+    }
+
+    .stages-milestones {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 0.5rem;
+      text-align: center;
+    }
+
+    @media (max-width: 650px) {
+      .stages-milestones {
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
+
+    .milestone-item {
+      padding: 0.55rem 0.35rem;
+      border-radius: var(--radius-sm);
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid transparent;
+      transition: all 0.2s ease;
+    }
+
+    .milestone-item.active {
+      background: rgba(16, 185, 129, 0.12);
+      border-color: rgba(16, 185, 129, 0.35);
+    }
+
+    .milestone-name {
+      font-size: 0.75rem;
+      font-weight: 700;
+      color: var(--text-main);
+    }
+
+    .milestone-item.active .milestone-name {
+      color: var(--brand-green-light);
+    }
+
+    .milestone-range {
+      font-size: 0.68rem;
+      color: var(--text-muted);
+    }
+
+    /* Schedules Panel */
+    .panel-schedules {
+      grid-column: span 12;
+    }
+
+    .schedules-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+      gap: 1.25rem;
+    }
+
+    .schedule-card {
+      background: var(--bg-surface);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-md);
+      padding: 1.35rem;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      transition: all 0.25s ease;
+      position: relative;
+    }
+
+    .schedule-card:hover {
+      border-color: rgba(52, 211, 153, 0.35);
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+    }
+
+    .schedule-card.state-due-tomorrow {
+      border-color: rgba(245, 158, 11, 0.65);
+      background: linear-gradient(180deg, rgba(245, 158, 11, 0.09) 0%, var(--bg-surface) 100%);
+      box-shadow: 0 0 20px rgba(245, 158, 11, 0.15);
+    }
+
+    .schedule-card.state-warning-5days {
+      border-color: rgba(234, 88, 12, 0.65);
+      background: linear-gradient(180deg, rgba(234, 88, 12, 0.09) 0%, var(--bg-surface) 100%);
+      box-shadow: 0 0 20px rgba(234, 88, 12, 0.15);
+    }
+
+    .schedule-card.state-overdue {
+      border-color: rgba(255, 59, 48, 0.7);
+      background: linear-gradient(180deg, rgba(255, 59, 48, 0.1) 0%, var(--bg-surface) 100%);
+      box-shadow: 0 0 20px rgba(255, 59, 48, 0.2);
+    }
+
+    .card-top {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 0.75rem;
+      margin-bottom: 1rem;
+    }
+
+    .card-top-title h3 {
+      font-size: 1.05rem;
+      font-weight: 700;
+      color: var(--text-main);
+      display: flex;
+      align-items: center;
+      gap: 0.45rem;
+    }
+
+    .card-top-title p {
+      font-size: 0.78rem;
+      color: var(--text-muted);
+      margin-top: 0.2rem;
+    }
+
+    .status-pill {
+      font-size: 0.72rem;
+      font-weight: 800;
+      padding: 0.25rem 0.65rem;
+      border-radius: var(--radius-full);
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      white-space: nowrap;
+    }
+
+    .pill-green { background: rgba(16, 185, 129, 0.2); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.4); }
+    .pill-amber { background: rgba(245, 158, 11, 0.2); color: #fbbf24; border: 1px solid rgba(245, 158, 11, 0.5); }
+    .pill-orange { background: rgba(234, 88, 12, 0.25); color: #fb923c; border: 1px solid rgba(234, 88, 12, 0.5); }
+    .pill-red { background: rgba(255, 59, 48, 0.25); color: #ff8580; border: 1px solid rgba(255, 59, 48, 0.6); }
+
+    .schedule-metric-display {
+      background: rgba(0, 0, 0, 0.28);
+      border-radius: var(--radius-sm);
+      padding: 0.9rem;
+      margin-bottom: 1.1rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border: 1px solid rgba(255, 255, 255, 0.05);
+    }
+
+    .metric-days-box h4 {
+      font-size: 1.65rem;
+      font-weight: 800;
+      color: #fff;
+      line-height: 1;
+    }
+
+    .metric-days-box p {
+      font-size: 0.72rem;
+      color: var(--text-muted);
+      letter-spacing: 0.02em;
+      margin-top: 0.25rem;
+    }
+
+    .metric-next-box {
+      text-align: right;
+    }
+
+    .metric-next-box span.due-text {
+      font-size: 0.85rem;
+      font-weight: 700;
+      display: block;
+    }
+
+    .metric-next-box span.cycle-text {
+      font-size: 0.72rem;
+      color: var(--text-muted);
+    }
+
+    .schedule-inputs {
+      margin-bottom: 1rem;
+    }
+
+    .interval-config-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-top: 0.6rem;
+      padding-top: 0.6rem;
+      border-top: 1px dashed rgba(255, 255, 255, 0.08);
+      font-size: 0.78rem;
+      color: var(--text-muted);
+    }
+
+    .interval-input {
+      width: 65px !important;
+      padding: 0.3rem 0.4rem !important;
+      text-align: center;
+      font-weight: 700;
+      font-size: 0.85rem !important;
+    }
+
+    .schedule-actions {
+      display: flex;
+      gap: 0.5rem;
+      margin-top: auto;
+    }
+
+    .btn-apply-today {
+      flex: 1;
+      background: var(--bg-elevated);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      color: var(--text-main);
+      padding: 0.6rem 0.8rem;
+      border-radius: var(--radius-sm);
+      font-size: 0.82rem;
+      font-weight: 600;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.4rem;
+      transition: all 0.2s ease;
+      font-family: inherit;
+    }
+
+    .btn-apply-today:hover {
+      background: rgba(16, 185, 129, 0.2);
+      border-color: var(--brand-green);
+      color: #6ee7b7;
+    }
+
+    /* Harvest Logger */
+    .panel-harvest {
+      grid-column: span 12;
+    }
+
+    .harvest-layout {
+      display: grid;
+      grid-template-columns: 360px 1fr;
+      gap: 1.5rem;
+    }
+
+    @media (max-width: 960px) {
+      .harvest-layout {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .harvest-form-card {
+      background: var(--bg-surface);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-md);
+      padding: 1.25rem;
+      height: fit-content;
+    }
+
+    .harvest-form-card h3 {
+      font-size: 1rem;
+      font-weight: 700;
+      margin-bottom: 1rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      color: #fff;
+    }
+
+    .quick-kg-pills {
+      display: flex;
+      gap: 0.4rem;
+      margin-top: 0.45rem;
+      flex-wrap: wrap;
+    }
+
+    .btn-quick-kg {
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      color: var(--text-muted);
+      padding: 0.25rem 0.6rem;
+      border-radius: var(--radius-sm);
+      font-size: 0.75rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.15s;
+      font-family: inherit;
+    }
+
+    .btn-quick-kg:hover {
+      background: rgba(16, 185, 129, 0.15);
+      color: #34d399;
+      border-color: var(--brand-green);
+    }
+
+    .btn-submit-harvest {
+      width: 100%;
+      background: linear-gradient(135deg, #10b981, #059669);
+      color: #fff;
+      border: none;
+      padding: 0.75rem 1rem;
+      border-radius: var(--radius-sm);
+      font-size: 0.9rem;
+      font-weight: 700;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+      transition: all 0.2s;
+      box-shadow: 0 4px 14px rgba(16, 185, 129, 0.35);
+      font-family: inherit;
+      margin-top: 1.1rem;
+    }
+
+    .btn-submit-harvest:hover {
+      background: linear-gradient(135deg, #34d399, #10b981);
+      box-shadow: 0 6px 18px rgba(16, 185, 129, 0.45);
+      transform: translateY(-1px);
+    }
+
+    /* Harvest History Table */
+    .harvest-history-card {
+      background: var(--bg-surface);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-md);
+      padding: 1.25rem;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .history-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1rem;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+    }
+
+    .history-header h3 {
+      font-size: 1rem;
+      font-weight: 700;
+      color: #fff;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .harvest-table-wrap {
+      overflow-x: auto;
+      border-radius: var(--radius-sm);
+      border: 1px solid rgba(255, 255, 255, 0.06);
+    }
+
+    table.harvest-table {
+      width: 100%;
+      border-collapse: collapse;
+      text-align: left;
+      font-size: 0.85rem;
+    }
+
+    table.harvest-table th {
+      background: rgba(0, 0, 0, 0.35);
+      padding: 0.75rem 1rem;
+      font-weight: 700;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      font-size: 0.72rem;
+      letter-spacing: 0.04em;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    }
+
+    table.harvest-table td {
+      padding: 0.8rem 1rem;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+      color: var(--text-main);
+    }
+
+    table.harvest-table tr:hover td {
+      background: rgba(255, 255, 255, 0.03);
+    }
+
+    .weight-badge {
+      display: inline-block;
+      font-weight: 800;
+      color: #34d399;
+      background: rgba(16, 185, 129, 0.12);
+      padding: 0.2rem 0.6rem;
+      border-radius: var(--radius-full);
+      font-size: 0.85rem;
+    }
+
+    .btn-delete {
+      background: transparent;
+      border: none;
+      color: var(--text-dim);
+      cursor: pointer;
+      padding: 0.35rem 0.5rem;
+      border-radius: 6px;
+      transition: all 0.2s;
+    }
+
+    .btn-delete:hover {
+      color: #ff6b6b;
+      background: rgba(255, 59, 48, 0.15);
+    }
+
+    .empty-state {
+      text-align: center;
+      padding: 2.5rem 1rem;
+      color: var(--text-muted);
+    }
+
+    .empty-state-icon {
+      font-size: 2.2rem;
+      margin-bottom: 0.5rem;
+      opacity: 0.6;
+    }
+
+    /* Agronomic Guidance Footer */
+    .agri-tips-card {
+      grid-column: span 12;
+      background: linear-gradient(135deg, rgba(16, 185, 129, 0.08) 0%, rgba(245, 158, 11, 0.05) 100%);
+      border: 1px solid rgba(16, 185, 129, 0.2);
+      border-radius: var(--radius-md);
+      padding: 1.25rem 1.5rem;
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1rem;
+    }
+
+    .tips-content h4 {
+      font-size: 0.95rem;
+      font-weight: 700;
+      color: #a7f3d0;
+      margin-bottom: 0.25rem;
+    }
+
+    .tips-content p {
+      font-size: 0.82rem;
+      color: var(--text-muted);
+      max-width: 860px;
+      line-height: 1.6;
+    }
+
+    footer {
+      text-align: center;
+      margin-top: 2.5rem;
+      padding-top: 1.5rem;
+      border-top: 1px solid rgba(255, 255, 255, 0.06);
+      font-size: 0.8rem;
+      color: var(--text-dim);
+    }
+
+    .text-success { color: #34d399; }
+    .text-warning { color: #fbbf24; }
+    .text-danger { color: #ff6b6b; }
+
+    @media print {
+      body { background: #fff; color: #000; }
+      header, .btn-action, .schedule-actions, .harvest-form-card, .btn-today, .lang-switcher { display: none !important; }
+      .panel, .kpi-card, .schedule-card { border: 1px solid #ccc; box-shadow: none; background: #fff; }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    
+    <!-- Top Header -->
+    <header>
+      <div class="brand-group">
+        <div class="chili-badge" title="Scotch Bonnet / Nai Miris">🌶️</div>
+        <div class="brand-titles">
+          <h1>
+            <span id="titlePart1">Scotch Bonnet (Nai Miris)</span> <span class="chili-highlight" id="titlePart2">Farm OS</span>
+          </h1>
+          <p id="brandSubtitle">නයි මිරිස් වගා පාලන පුවරුව · Growth, Chemical Schedules & Harvest Log</p>
+        </div>
+      </div>
+
+      <div class="header-actions">
+        
+        <!-- Language Switcher Toggle -->
+        <div class="lang-switcher" role="group" aria-label="Language selection">
+          <button type="button" class="btn-lang" id="btnLangSi" onclick="setLanguage('si')">
+            🇱🇰 සිංහල
+          </button>
+          <button type="button" class="btn-lang" id="btnLangEn" onclick="setLanguage('en')">
+            🇬🇧 English
+          </button>
+        </div>
+
+        <div class="date-badge" id="currentDateBadge">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+          <span id="liveDateText">Today</span>
+        </div>
+
+        <button class="btn-action demo-btn" id="btnLoadDemo" title="Test alerts with 13-day NPK & 5-day Fungicide">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16"/><path d="M16 21h5v-5"/></svg>
+          <span id="txtBtnDemo">Load Demo Alerts</span>
+        </button>
+
+        <button class="btn-action" id="btnExportCsv" title="Export records as CSV spreadsheet">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          <span id="txtBtnExport">Export CSV</span>
+        </button>
+
+        <button class="btn-action" id="btnResetData" title="Reset all records">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+          <span id="txtBtnReset">Reset</span>
+        </button>
+      </div>
+    </header>
+
+    <!-- Dynamic Reminders Banner Area -->
+    <div class="alerts-container" id="alertsContainer">
+      <!-- Generated via JS -->
+    </div>
+
+    <!-- Main Content Grid -->
+    <main class="dashboard-grid">
+
+      <!-- Summary KPI Row -->
+      <section class="kpi-row" aria-label="Key Farm Metrics">
+        
+        <div class="kpi-card">
+          <div class="kpi-info">
+            <p class="label" id="lblKpiPlantDays">Total Growing Days</p>
+            <h3 id="kpiPlantDays">0 <span style="font-size: 1rem; font-weight: normal; color: var(--text-muted)" id="unitDays1">Days</span></h3>
+            <p class="subtext" id="kpiPlantStage">Set start date below</p>
+          </div>
+          <div class="kpi-icon-wrap kpi-icon-green">🌱</div>
+        </div>
+
+        <div class="kpi-card">
+          <div class="kpi-info">
+            <p class="label" id="lblKpiTotalYield">Total Harvested Sum</p>
+            <h3 id="kpiTotalYield">0.00 <span style="font-size: 1rem; font-weight: normal; color: var(--text-muted)">kg</span></h3>
+            <p class="subtext" id="kpiHarvestCount">0 entries recorded</p>
+          </div>
+          <div class="kpi-icon-wrap kpi-icon-red">🌶️</div>
+        </div>
+
+        <div class="kpi-card">
+          <div class="kpi-info">
+            <p class="label" id="lblKpiNpk">NPK Fertilizer</p>
+            <h3 id="kpiNpkDays">--</h3>
+            <p class="subtext" id="kpiNpkStatus">Cycle: 14 Days</p>
+          </div>
+          <div class="kpi-icon-wrap kpi-icon-amber">🧪</div>
+        </div>
+
+        <div class="kpi-card">
+          <div class="kpi-info">
+            <p class="label" id="lblKpiFungi">Fungicide Protection</p>
+            <h3 id="kpiFungiDays">--</h3>
+            <p class="subtext" id="kpiFungiStatus">Cycle: 7 Days</p>
+          </div>
+          <div class="kpi-icon-wrap kpi-icon-purple">🛡️</div>
+        </div>
+
+      </section>
+
+      <!-- Section 1: Start Date & Growing Days Calculation -->
+      <section class="panel panel-planting" aria-label="Growing Days Tracker">
+        <div class="panel-header">
+          <h2>
+            <span>🌱</span> <span id="headerPlanting">Start Date & Total Growing Days</span>
+          </h2>
+          <span class="badge-tag" id="badgePlantingTag">Lifecycle Tracker</span>
+        </div>
+
+        <div class="planting-grid">
+          <div class="planting-input-box">
+            <div class="form-group">
+              <label for="plantingDate" id="lblPlantingDate">Start / Transplanting Date:</label>
+              <div class="input-row">
+                <input type="date" id="plantingDate">
+                <button type="button" class="btn-today" onclick="setDateFieldToday('plantingDate')" id="btnTodayPlanting">Today</button>
+              </div>
+            </div>
+            <p style="font-size: 0.78rem; color: var(--text-muted); margin-top: 0.5rem;" id="descPlanting">
+              Calculates cumulative crop age and automatically positions your Nai Miris bushes along the agronomic lifecycle.
+            </p>
+          </div>
+
+          <div class="stage-timeline-wrap">
+            <div class="stage-header">
+              <div class="stage-current-title">
+                <span id="lblGrowthPhasePrefix">Growth Phase:</span> <span class="text-success" id="stageBadgeText">Awaiting Start Date</span>
+              </div>
+              <div style="font-size: 0.88rem; font-weight: 700; color: #34d399;" id="stageDaysCounter">
+                0 Days Elapsed
+              </div>
+            </div>
+
+            <div class="stage-progress-bar-container">
+              <div class="stage-progress-bar-fill" id="stageProgressBar"></div>
+            </div>
+
+            <div class="stages-milestones">
+              <div class="milestone-item" id="stage1">
+                <div class="milestone-name" id="stage1Title">1. Root & Seedling</div>
+                <div class="milestone-range" id="stage1Range">Days 1 - 25</div>
+              </div>
+              <div class="milestone-item" id="stage2">
+                <div class="milestone-name" id="stage2Title">2. Vegetative Canopy</div>
+                <div class="milestone-range" id="stage2Range">Days 26 - 50</div>
+              </div>
+              <div class="milestone-item" id="stage3">
+                <div class="milestone-name" id="stage3Title">3. Flowering & Fruit Set</div>
+                <div class="milestone-range" id="stage3Range">Days 51 - 75</div>
+              </div>
+              <div class="milestone-item" id="stage4">
+                <div class="milestone-name" id="stage4Title">4. Harvesting Flushes</div>
+                <div class="milestone-range" id="stage4Range">Days 76+</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Section 2: Fertilizer, Fungicide & Hormone Intervals & Schedules -->
+      <section class="panel panel-schedules" aria-label="Chemical Intervals & Dynamic Reminders">
+        <div class="panel-header">
+          <h2>
+            <span>⚡</span> <span id="headerSchedules">Crop Care Intervals & Dynamic Reminders</span>
+          </h2>
+          <span class="badge-tag" id="badgeSchedulesTag">Dynamic Alert Engine</span>
+        </div>
+
+        <div class="schedules-grid">
+          
+          <!-- Card 1: NPK Fertilizer -->
+          <div class="schedule-card" id="cardNpk">
+            <div>
+              <div class="card-top">
+                <div class="card-top-title">
+                  <h3 id="cardNpkTitle">🧪 NPK Fertilizer</h3>
+                  <p id="cardNpkSub">Nutrition Cycle</p>
+                </div>
+                <span class="status-pill pill-green" id="badgeNpk">On Schedule</span>
+              </div>
+
+              <div class="schedule-metric-display">
+                <div class="metric-days-box">
+                  <h4 id="displayDaysNpk">--</h4>
+                  <p id="lblNpkDaysElapsed">Days Elapsed</p>
+                </div>
+                <div class="metric-next-box">
+                  <span class="due-text" id="displayDueNpk">No record</span>
+                  <span class="cycle-text" id="displayCycleNpk">Interval: 14 Days</span>
+                </div>
+              </div>
+
+              <div class="schedule-inputs">
+                <div class="form-group">
+                  <label for="dateNpk" id="lblDateNpk">Last Application Date:</label>
+                  <div class="input-row">
+                    <input type="date" id="dateNpk">
+                    <button type="button" class="btn-today" onclick="setDateFieldToday('dateNpk')" id="btnTodayNpk">Today</button>
+                  </div>
+                </div>
+
+                <div class="interval-config-row">
+                  <span id="lblIntervalNpk">Cycle Interval (Days):</span>
+                  <input type="number" id="intervalNpk" class="interval-input" min="1" max="90" value="14" onchange="handleIntervalChange('npk', this.value)">
+                </div>
+              </div>
+            </div>
+
+            <div class="schedule-actions">
+              <button type="button" class="btn-apply-today" onclick="markAppliedToday('dateNpk')">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
+                <span id="txtBtnApplyNpk">Mark Applied Today</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Card 2: Fungicide Protection -->
+          <div class="schedule-card" id="cardFungicide">
+            <div>
+              <div class="card-top">
+                <div class="card-top-title">
+                  <h3 id="cardFungiTitle">🛡️ Fungicide Spray</h3>
+                  <p id="cardFungiSub">Anthracnose Protection</p>
+                </div>
+                <span class="status-pill pill-green" id="badgeFungi">Protected</span>
+              </div>
+
+              <div class="schedule-metric-display">
+                <div class="metric-days-box">
+                  <h4 id="displayDaysFungi">--</h4>
+                  <p id="lblFungiDaysElapsed">Days Elapsed</p>
+                </div>
+                <div class="metric-next-box">
+                  <span class="due-text" id="displayDueFungi">No record</span>
+                  <span class="cycle-text" id="displayCycleFungi">Interval: 7 Days</span>
+                </div>
+              </div>
+
+              <div class="schedule-inputs">
+                <div class="form-group">
+                  <label for="dateFungicide" id="lblDateFungi">Last Spray Date:</label>
+                  <div class="input-row">
+                    <input type="date" id="dateFungicide">
+                    <button type="button" class="btn-today" onclick="setDateFieldToday('dateFungicide')" id="btnTodayFungi">Today</button>
+                  </div>
+                </div>
+
+                <div class="interval-config-row">
+                  <span id="lblIntervalFungi">Cycle Interval (Days):</span>
+                  <input type="number" id="intervalFungi" class="interval-input" min="1" max="90" value="7" onchange="handleIntervalChange('fungicide', this.value)">
+                </div>
+              </div>
+            </div>
+
+            <div class="schedule-actions">
+              <button type="button" class="btn-apply-today" onclick="markAppliedToday('dateFungicide')">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
+                <span id="txtBtnApplyFungi">Mark Applied Today</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Card 3: Hormone Booster -->
+          <div class="schedule-card" id="cardHormone">
+            <div>
+              <div class="card-top">
+                <div class="card-top-title">
+                  <h3 id="cardHormoneTitle">💧 Hormone & Flower Booster</h3>
+                  <p id="cardHormoneSub">Bloom Retainer</p>
+                </div>
+                <span class="status-pill pill-green" id="badgeHormone">On Track</span>
+              </div>
+
+              <div class="schedule-metric-display">
+                <div class="metric-days-box">
+                  <h4 id="displayDaysHormone">--</h4>
+                  <p id="lblHormoneDaysElapsed">Days Elapsed</p>
+                </div>
+                <div class="metric-next-box">
+                  <span class="due-text" id="displayDueHormone">No record</span>
+                  <span class="cycle-text" id="displayCycleHormone">Interval: 10 Days</span>
+                </div>
+              </div>
+
+              <div class="schedule-inputs">
+                <div class="form-group">
+                  <label for="dateHormone" id="lblDateHormone">Last Hormone Date:</label>
+                  <div class="input-row">
+                    <input type="date" id="dateHormone">
+                    <button type="button" class="btn-today" onclick="setDateFieldToday('dateHormone')" id="btnTodayHormone">Today</button>
+                  </div>
+                </div>
+
+                <div class="interval-config-row">
+                  <span id="lblIntervalHormone">Cycle Interval (Days):</span>
+                  <input type="number" id="intervalHormone" class="interval-input" min="1" max="90" value="10" onchange="handleIntervalChange('hormone', this.value)">
+                </div>
+              </div>
+            </div>
+
+            <div class="schedule-actions">
+              <button type="button" class="btn-apply-today" onclick="markAppliedToday('dateHormone')">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
+                <span id="txtBtnApplyHormone">Mark Applied Today</span>
+              </button>
+            </div>
+          </div>
+
+        </div>
+      </section>
+
+      <!-- Section 3: Daily Harvest Logger & Total Sum -->
+      <section class="panel panel-harvest" aria-label="Daily Harvest Logger">
+        <div class="panel-header">
+          <h2>
+            <span>⚖️</span> <span id="headerHarvest">Daily Harvest Logger & Yield Sum</span>
+          </h2>
+          <span class="badge-tag" id="badgeHarvestTag">Production Records</span>
+        </div>
+
+        <div class="harvest-layout">
+          
+          <!-- Harvest Entry Form -->
+          <div class="harvest-form-card">
+            <h3>
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
+              <span id="formHarvestTitle">Log Daily Picking</span>
+            </h3>
+
+            <form id="harvestForm" onsubmit="handleHarvestSubmit(event)">
+              <div class="form-group">
+                <label for="harvestDate" id="lblHarvestDate">Harvest Date:</label>
+                <div class="input-row">
+                  <input type="date" id="harvestDate" required>
+                  <button type="button" class="btn-today" onclick="setDateFieldToday('harvestDate')" id="btnTodayHarvest">Today</button>
+                </div>
+              </div>
+
+              <div class="form-group">
+                <label for="harvestKg" id="lblHarvestKg">Weight in Kilograms (kg):</label>
+                <input type="number" id="harvestKg" step="0.05" min="0.01" placeholder="e.g. 12.5" required>
+                
+                <div class="quick-kg-pills">
+                  <button type="button" class="btn-quick-kg" onclick="addQuickKg(1)">+1 kg</button>
+                  <button type="button" class="btn-quick-kg" onclick="addQuickKg(5)">+5 kg</button>
+                  <button type="button" class="btn-quick-kg" onclick="addQuickKg(10)">+10 kg</button>
+                  <button type="button" class="btn-quick-kg" onclick="addQuickKg(20)">+20 kg</button>
+                </div>
+              </div>
+
+              <div class="form-group">
+                <label for="harvestNotes" id="lblHarvestNotes">Batch / Grade / Quality Notes:</label>
+                <input type="text" id="harvestNotes" placeholder="e.g. Grade A ripe red, Plot 1">
+              </div>
+
+              <button type="submit" class="btn-submit-harvest">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+                <span id="txtBtnRecordHarvest">Record Daily Harvest</span>
+              </button>
+            </form>
+          </div>
+
+          <!-- Harvest History Table & Aggregate Stats -->
+          <div class="harvest-history-card">
+            <div class="history-header">
+              <h3>
+                <span>📋</span> <span id="headerHistoryTitle">Harvest History & Cumulative Yield</span>
+              </h3>
+              <div style="font-size: 0.85rem; color: var(--text-muted);">
+                <span id="lblSessionCount">Total Sessions:</span> <strong style="color: #fff;" id="tableSessionCount">0</strong>
+              </div>
+            </div>
+
+            <div class="harvest-table-wrap">
+              <table class="harvest-table" id="harvestTable">
+                <thead>
+                  <tr>
+                    <th>#</th>
+                    <th id="thDate">Date</th>
+                    <th id="thWeight">Weight</th>
+                    <th id="thNotes">Notes / Quality</th>
+                    <th style="text-align: right;" id="thAction">Action</th>
+                  </tr>
+                </thead>
+                <tbody id="harvestTableBody">
+                  <!-- Injected via JavaScript -->
+                </tbody>
+              </table>
+              <div class="empty-state" id="harvestEmptyState">
+                <div class="empty-state-icon">🧺</div>
+                <p id="txtEmptyHarvestTitle">No harvest entries recorded yet.</p>
+                <p style="font-size: 0.75rem; margin-top: 0.25rem;" id="txtEmptyHarvestDesc">Enter kilograms and harvest date on the left to start tracking your total yield.</p>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </section>
+
+      <!-- Agronomic Tips & Cycle Reference -->
+      <section class="agri-tips-card">
+        <div class="tips-content">
+          <h4 id="tipsTitle">💡 Scotch Bonnet / Nai Miris Cultivation Advisory</h4>
+          <p id="tipsBody">
+            • <strong>NPK (14 Days)</strong>: Top-dress with balanced fertilizer every two weeks to maintain continuous flower flushes and sturdy branching.<br>
+            • <strong>Fungicide (7 Days)</strong>: Anthracnose fruit rot spreads rapidly in tropical humidity. Spray on a strict 7-day cycle or re-apply after heavy rain.<br>
+            • <strong>Hormones (10 Days)</strong>: Spray blossom boosters / NAA to prevent premature flower drop during high temperatures.
+          </p>
+        </div>
+        <div style="font-size: 0.8rem; color: #a7f3d0; text-align: right;">
+          <span id="tipsSource">Sri Lanka Agricultural Practices Standard</span>
+        </div>
+      </section>
+
+    </main>
+
+    <!-- Footer -->
+    <footer>
+      <p id="footerText1">Scotch Bonnet (Nai Miris) Chili Farm Management System · Single-File Web Application</p>
+      <p style="margin-top: 0.25rem;" id="footerText2">Data saved automatically in your local browser · Works 100% offline</p>
+    </footer>
+
+  </div>
+
+  <!-- Pure Vanilla JS Logic with Sinhala & English Translations -->
+  <script>
+    const STORAGE_KEY = 'scotch_bonnet_farm_data_v2';
+    const LANG_STORAGE_KEY = 'scotch_bonnet_lang_pref';
+
+    // Application State
+    let farmData = {
+      plantingDate: '',
+      dateNpk: '',
+      dateFungicide: '',
+      dateHormone: '',
+      intervals: {
+        npk: 14,
+        fungicide: 7,
+        hormone: 10
+      },
+      harvests: []
+    };
+
+    // Active Language: 'si' (Sinhala) or 'en' (English)
+    let currentLang = 'si';
+
+    // Complete Bilingual Translation Dictionary
+    const I18N = {
+      en: {
+        titlePart1: 'Scotch Bonnet (Nai Miris)',
+        titlePart2: 'Farm OS',
+        brandSubtitle: 'Nai Miris Precision Chili Farm OS · Growth, Chemical Intervals & Harvest Log',
+        todayPrefix: 'Today: ',
+        btnDemo: 'Load Demo Alerts',
+        btnExport: 'Export CSV',
+        btnReset: 'Reset',
+        
+        // KPIs
+        kpiPlantDaysLabel: 'Total Growing Days',
+        unitDays: 'Days',
+        kpiPlantStageEmpty: 'Set start date below',
+        kpiTotalYieldLabel: 'Total Harvested Sum',
+        kpiHarvestCountEmpty: '0 entries recorded',
+        kpiNpkLabel: 'NPK Fertilizer',
+        kpiFungiLabel: 'Fungicide Protection',
+        cyclePrefix: 'Cycle: ',
+        
+        // Planting Panel
+        headerPlanting: 'Start Date & Total Growing Days',
+        badgePlantingTag: 'Lifecycle Tracker',
+        lblPlantingDate: 'Start / Transplanting Date:',
+        descPlanting: 'Calculates cumulative crop age and automatically positions your Nai Miris bushes along the agronomic lifecycle.',
+        btnToday: 'Today',
+        lblGrowthPhasePrefix: 'Growth Phase: ',
+        stageAwaiting: 'Awaiting Start Date',
+        growingDaysSuffix: 'Growing Days',
+        weekWord: 'Week',
+        
+        stage1Title: '1. Root & Seedling',
+        stage1Range: 'Days 1 - 25',
+        stage2Title: '2. Vegetative Canopy',
+        stage2Range: 'Days 26 - 50',
+        stage3Title: '3. Flowering & Fruit Set',
+        stage3Range: 'Days 51 - 75',
+        stage4Title: '4. Harvesting Flushes',
+        stage4Range: 'Days 76+',
+        
+        stage1Name: 'Stage 1: Seedling & Root Establishment',
+        stage2Name: 'Stage 2: Vegetative Growth & Branching',
+        stage3Name: 'Stage 3: First Flowering & Fruit Set',
+        stage4Name: 'Stage 4: Active Picking & Fruit Flushes',
+
+        // Schedules Panel
+        headerSchedules: 'Crop Care Intervals & Dynamic Reminders',
+        badgeSchedulesTag: 'Dynamic Alert Engine',
+        
+        cardNpkTitle: '🧪 NPK Fertilizer',
+        cardNpkSub: 'Nutrition Cycle',
+        lblNpkDaysElapsed: 'Days Elapsed',
+        lblDateNpk: 'Last Application Date:',
+        lblIntervalNpk: 'Cycle Interval (Days):',
+        txtBtnApplyNpk: 'Mark Applied Today',
+        
+        cardFungiTitle: '🛡️ Fungicide Spray',
+        cardFungiSub: 'Anthracnose Protection',
+        lblFungiDaysElapsed: 'Days Elapsed',
+        lblDateFungi: 'Last Spray Date:',
+        lblIntervalFungi: 'Cycle Interval (Days):',
+        txtBtnApplyFungi: 'Mark Applied Today',
+        
+        cardHormoneTitle: '💧 Hormone & Flower Booster',
+        cardHormoneSub: 'Bloom Retainer',
+        lblHormoneDaysElapsed: 'Days Elapsed',
+        lblDateHormone: 'Last Hormone Date:',
+        lblIntervalHormone: 'Cycle Interval (Days):',
+        txtBtnApplyHormone: 'Mark Applied Today',
+        
+        intervalPrefix: 'Interval: Every ',
+        daysWord: 'Days',
+        noDateSet: 'No date set',
+        notSetBadge: 'Not Set',
+        onScheduleBadge: 'ON SCHEDULE',
+        dueTomorrowBadge: 'DUE TOMORROW',
+        dueTodayBadge: 'DUE TODAY',
+        protectedBadge: 'PROTECTED',
+        onTrackBadge: 'ON TRACK',
+        overdueSuffix: 'd OVERDUE',
+        daysAgoSuffix: ' Days Ago',
+        dueTomorrowText: '⚠️ Due Tomorrow!',
+        dueTodayText: '🚨 Due TODAY',
+        overdueByText: '🔴 Overdue by ',
+        dueInText: 'Due in ',
+        nextInText: 'Next in ',
+
+        // Dynamic Alerts
+        alertNpkTomorrowTitle: 'NPK Fertilizer is Due TOMORROW (13 Days Since Last Application)',
+        alertNpkTomorrowDesc: 'NPK was applied 13 days ago ({date}). Under your {interval}-day schedule, re-application is due tomorrow. Prepare your balanced fertilizer mix!',
+        alertNpkTodayTitle: 'NPK Fertilizer is DUE TODAY ({interval}-Day Cycle Reached)',
+        alertNpkTodayDesc: 'Today is Day {interval} since your last NPK fertilizer application. Nourish your chili plants to fuel heavy fruit setting.',
+        alertNpkOverdueTitle: 'NPK Fertilizer is Overdue by {overdue} Days!',
+        alertNpkOverdueDesc: 'Last applied {days} days ago ({date}). Immediate top-dressing recommended to avoid yield drops.',
+
+        alertFungi5DaysTitle: 'Fungicide Applied 5 Days Ago — Needs Re-application in 2 Days (7-Day Cycle)',
+        alertFungi5DaysDesc: 'Fungicide was applied 5 days ago ({date}). The chemical barrier begins diminishing after 7 days in humid weather. Prepare for re-application in 2 days.',
+        alertFungiTomorrowTitle: 'Fungicide Spray Due TOMORROW (Applied {days} Days Ago)',
+        alertFungiTomorrowDesc: 'Fungicide protection window finishes tomorrow. Inspect leaf canopies and young fruit for anthracnose spots.',
+        alertFungiTodayTitle: 'Fungicide Spray is DUE TODAY ({interval}-Day Cycle Reached)',
+        alertFungiTodayDesc: 'Today is Day {interval} since last fungicide application. Spray early morning or late afternoon to prevent fungal blight and fruit rot.',
+        alertFungiOverdueTitle: 'Fungicide Protection Overdue by {overdue} Days!',
+        alertFungiOverdueDesc: 'Applied {days} days ago ({date}). Your Scotch Bonnet crop is unprotected against fungal diseases.',
+
+        alertOptimalTitle: 'All Crop Care Cycles Active',
+        alertOptimalBadge: 'Optimal',
+        alertOptimalDesc: 'All fertilizer, fungicide protection, and hormone cycles are currently within safe intervals. Keep monitoring daily harvests!',
+
+        // Harvest Panel
+        headerHarvest: 'Daily Harvest Logger & Yield Sum',
+        badgeHarvestTag: 'Production Records',
+        formHarvestTitle: 'Log Daily Picking',
+        lblHarvestDate: 'Harvest Date:',
+        lblHarvestKg: 'Weight in Kilograms (kg):',
+        lblHarvestNotes: 'Batch / Grade / Quality Notes:',
+        txtHarvestNotesPlaceholder: 'e.g. Grade A ripe red, Plot 1',
+        txtBtnRecordHarvest: 'Record Daily Harvest',
+
+        headerHistoryTitle: 'Harvest History & Cumulative Yield',
+        lblSessionCount: 'Total Sessions:',
+        thDate: 'Date',
+        thWeight: 'Weight',
+        thNotes: 'Notes / Quality',
+        thAction: 'Action',
+        txtEmptyHarvestTitle: 'No harvest entries recorded yet.',
+        txtEmptyHarvestDesc: 'Enter kilograms and harvest date on the left to start tracking your total yield.',
+
+        confirmDelete: 'Are you sure you want to delete this harvest record?',
+        confirmReset: 'Reset all farm records and start dates? This cannot be undone.',
+        alertInvalidInput: 'Please provide a valid harvest date and kilograms (> 0).',
+        alertNoExport: 'No harvest records available to export.',
+        demoLoadedMsg: 'Demo data loaded successfully!\n\n• NPK applied 13 days ago -> Due Tomorrow Alert\n• Fungicide applied 5 days ago -> Re-apply in 2 days Alert\n• 62 Growing days elapsed\n• 3 Harvest entries logged',
+
+        // Tips
+        tipsTitle: '💡 Scotch Bonnet / Nai Miris Cultivation Advisory',
+        tipsBody: '• <strong>NPK (14 Days)</strong>: Top-dress with balanced fertilizer every two weeks to maintain continuous flower flushes and sturdy branching.<br>• <strong>Fungicide (7 Days)</strong>: Anthracnose fruit rot spreads rapidly in tropical humidity. Spray on a strict 7-day cycle or re-apply after heavy rain.<br>• <strong>Hormones (10 Days)</strong>: Spray blossom boosters / NAA to prevent premature flower drop during high temperatures.',
+        tipsSource: 'Sri Lanka Agricultural Practices Standard',
+        footerText1: 'Scotch Bonnet (Nai Miris) Chili Farm Management System · Single-File Web Application',
+        footerText2: 'Data saved automatically in your local browser · Works 100% offline'
+      },
+      si: {
+        titlePart1: 'නයි මිරිස් (Scotch Bonnet)',
+        titlePart2: 'වගා පාලන පුවරුව',
+        brandSubtitle: 'නයි මිරිස් වගා කළමනාකරණ පද්ධතිය · වගා කාලය, රසායනික කාලපරාස සහ අස්වනු සටහන',
+        todayPrefix: 'අද: ',
+        btnDemo: 'නියැදි දත්ත පූරණය',
+        btnExport: 'CSV බාගන්න',
+        btnReset: 'නැවත සකසන්න',
+
+        // KPIs
+        kpiPlantDaysLabel: 'මුළු වගා කාලය (දින)',
+        unitDays: 'දින',
+        kpiPlantStageEmpty: 'පැල සිටවූ දිනය පහතින් සකසන්න',
+        kpiTotalYieldLabel: 'මුළු අස්වැන්න එකතුව',
+        kpiHarvestCountEmpty: 'වාර්තා ඇතුළත් කර නොමැත',
+        kpiNpkLabel: 'NPK පොහොර යෙදීම',
+        kpiFungiLabel: 'දිලීර නාශක ආරක්‍ෂාව',
+        cyclePrefix: 'චක්‍රය: ',
+
+        // Planting Panel
+        headerPlanting: 'පැල සිටවූ දිනය සහ මුළු වගා කාලය ගණනය',
+        badgePlantingTag: 'වගා චක්‍රය',
+        lblPlantingDate: 'පැල සිටවූ / රෝපණය කළ දිනය:',
+        descPlanting: 'ක්ෂේත්‍රයේ පැල රෝපණය කළ දිනය ඇතුළත් කිරීමෙන් පැලයේ වයස සහ වත්මන් වර්ධන අවධිය ස්වයංක්‍රීයව ගණනය කෙරේ.',
+        btnToday: 'අද දිනය',
+        lblGrowthPhasePrefix: 'වත්මන් වර්ධන අවධිය: ',
+        stageAwaiting: 'සිටවූ දිනයක් ඇතුළත් කර නොමැත',
+        growingDaysSuffix: 'දිනක් ගතවී ඇත',
+        weekWord: 'සති',
+
+        stage1Title: '1. පැළ සහ මුල් ඇදීම',
+        stage1Range: 'දින 1 - 25',
+        stage2Title: '2. ශාකමය වර්ධනය',
+        stage2Range: 'දින 26 - 50',
+        stage3Title: '3. මල් හා කරල් පිහිටීම',
+        stage3Range: 'දින 51 - 75',
+        stage4Title: '4. අස්වනු නෙළීමේ අවධිය',
+        stage4Range: 'දින 76+',
+
+        stage1Name: '1 වන අවධිය: පැළ ස්ථාපනය සහ මුල් ඇදීම',
+        stage2Name: '2 වන අවධිය: ශාකමය වර්ධනය සහ අතු බෙදීම',
+        stage3Name: '3 වන අවධිය: මල් හටගැනීම සහ කරල් පිහිටීම',
+        stage4Name: '4 වන අවධිය: සක්‍රීය අස්වනු නෙළීම සහ අඛණ්ඩ පලදාව',
+
+        // Schedules Panel
+        headerSchedules: 'රසායනික සහ පොහොර කාල පරාස හා සිහිකැඳවීම්',
+        badgeSchedulesTag: 'ස්මාර්ට් සිහිකැඳවීම්',
+
+        cardNpkTitle: '🧪 NPK පොහොර යෙදීම',
+        cardNpkSub: 'පෝෂණ චක්‍රය',
+        lblNpkDaysElapsed: 'ගතවූ දින ගණන',
+        lblDateNpk: 'අවසන් වරට යෙදූ දිනය:',
+        lblIntervalNpk: 'යෙදීමේ කාල පරතරය (දින):',
+        txtBtnApplyNpk: 'අද යෙදූ බව සටහන් කරන්න',
+
+        cardFungiTitle: '🛡️ දිලීර නාශක යෙදීම',
+        cardFungiSub: 'කොළ කොඩවීම හා ඇන්ත්‍රැක්නෝස් මර්දනය',
+        lblFungiDaysElapsed: 'ගතවූ දින ගණන',
+        lblDateFungi: 'අවසන් වරට යෙදූ දිනය:',
+        lblIntervalFungi: 'යෙදීමේ කාල පරතරය (දින):',
+        txtBtnApplyFungi: 'අද යෙදූ බව සටහන් කරන්න',
+
+        cardHormoneTitle: '💧 හෝමෝන / මල් ආරක්‍ෂක',
+        cardHormoneSub: 'මල් හැලීම වැළැක්වීම සහ කරල් බැඳීම',
+        lblHormoneDaysElapsed: 'ගතවූ දින ගණන',
+        lblDateHormone: 'අවසන් වරට යෙදූ දිනය:',
+        lblIntervalHormone: 'යෙදීමේ කාල පරතරය (දින):',
+        txtBtnApplyHormone: 'අද යෙදූ බව සටහන් කරන්න',
+
+        intervalPrefix: 'කාල පරතරය: සෑම දින ',
+        daysWord: 'කට වරක්',
+        noDateSet: 'දිනයක් සටහන් කර නැත',
+        notSetBadge: 'සටහන් කර නැත',
+        onScheduleBadge: 'නියමිත කාලයේ',
+        dueTomorrowBadge: 'හෙට යෙදිය යුතුය',
+        dueTodayBadge: 'අද යෙදිය යුතුය',
+        protectedBadge: 'ආරක්‍ෂිතයි',
+        onTrackBadge: 'යථා තත්ත්වයේ',
+        overdueSuffix: 'd පමාවී ඇත',
+        daysAgoSuffix: ' දිනකට පෙර',
+        dueTomorrowText: '⚠️ හෙට යෙදිය යුතුය!',
+        dueTodayText: '🚨 අද යෙදිය යුතුය',
+        overdueByText: '🔴 පමාවී ඇති දින: ',
+        dueInText: 'තව දින ',
+        nextInText: 'ඊළඟ වාරය තව දින ',
+
+        // Dynamic Alerts
+        alertNpkTomorrowTitle: 'NPK පොහොර හෙට යෙදිය යුතුය! (අවසන් වරට යොදා දින 13ක් ගතවී ඇත)',
+        alertNpkTomorrowDesc: 'අවසන් වරට NPK යොදා දින 13ක් ගතවී ඇත ({date}). දින {interval}ක චක්‍රය අනුව හෙට දිනයේ පොහොර යෙදිය යුතුය. අදම තුලිත පොහොර මිශ්‍රණය සූදානම් කරගන්න!',
+        alertNpkTodayTitle: 'NPK පොහොර අද යෙදිය යුතුය! (දින {interval}ක චක්‍රය සම්පූර්ණයි)',
+        alertNpkTodayDesc: 'අවසන් වරට පොහොර යොදා අදට දින {interval}ක් සපිරේ. බහුලව කරල් හටගැනීම සඳහා අදම පොහොර යොදන්න.',
+        alertNpkOverdueTitle: 'NPK පොහොර යෙදීම දින {overdue}ක් පමාවී ඇත!',
+        alertNpkOverdueDesc: 'අවසන් වරට යොදා දින {days}ක් ගතවී ඇත ({date}). කරල් හැලීම වැළැක්වීමට වහාම පොහොර යොදන්න.',
+
+        alertFungi5DaysTitle: 'දිලීර නාශක යොදා දින 5ක් ගතවී ඇත — තව දින 2කින් නැවත යෙදිය යුතුය (දින 7ක චක්‍රය)',
+        alertFungi5DaysDesc: 'දිලීර නාශක යොදා දින 5ක් ගතවී ඇත ({date}). අධික ආර්ද්‍රතාවයේදී දින 7කින් ආරක්‍ෂිත බව අඩුවේ. තව දින 2කින් නැවත යෙදීමට කටයුතු කරන්න.',
+        alertFungiTomorrowTitle: 'දිලීර නාශක හෙට යෙදිය යුතුය! (යොදා දින {days}ක් ගතවී ඇත)',
+        alertFungiTomorrowDesc: 'දින 7ක දිලීර නාශක ආරක්‍ෂිත කාලසීමාව හෙටින් අවසන් වේ. කොළ යට සහ කරල් පොකුරු පරීක්‍ෂා කර හෙට දිනයේ යොදන්න.',
+        alertFungiTodayTitle: 'දිලීර නාශක අද යෙදිය යුතුය! (දින {interval}ක චක්‍රය සම්පූර්ණයි)',
+        alertFungiTodayDesc: 'අවසන් වරට දිලීර නාශක යොදා අදට දින {interval}ක් සම්පූර්ණයි. කරල් කුණුවීම (ඇන්ත්‍රැක්නෝස්) වැළැක්වීමට උදෑසන හෝ සවස් කාලයේ යොදන්න.',
+        alertFungiOverdueTitle: 'දිලීර නාශක ආරක්‍ෂාව දින {overdue}ක් පමාවී ඇත!',
+        alertFungiOverdueDesc: 'අවසන් වරට යොදා දින {days}ක් ගතවී ඇත ({date}). ඔබගේ නයි මිරිස් වගාව දිලීර රෝග අවදානමට ලක්ව ඇත.',
+
+        alertOptimalTitle: 'සියලුම වගා චක්‍ර යථා තත්ත්වයේ පවතී',
+        alertOptimalBadge: 'යහපත්',
+        alertOptimalDesc: 'පොහොර, දිලීර නාශක සහ හෝමෝන යෙදීම් නියමිත කාලසීමාවන් තුළ පවතී. දෛනික අස්වනු නෙළීම දිගටම නිරීක්ෂණය කරන්න!',
+
+        // Harvest Panel
+        headerHarvest: 'දෛනික අස්වනු සටහන සහ මුළු අස්වැන්න',
+        badgeHarvestTag: 'නිෂ්පාදන වාර්තා',
+        formHarvestTitle: 'නව අස්වැන්නක් ඇතුළත් කරන්න',
+        lblHarvestDate: 'අස්වනු නෙළූ දිනය:',
+        lblHarvestKg: 'බර කිලෝග්‍රෑම් වලින් (kg):',
+        lblHarvestNotes: 'ශ්‍රේණිය / තත්ත්වය / සටහන්:',
+        txtHarvestNotesPlaceholder: 'උදා: A ශ්‍රේණියේ ඉදුණු රතු නයි මිරිස්, 1 වන කොටස',
+        txtBtnRecordHarvest: 'දෛනික අස්වැන්න සටහන් කරන්න',
+
+        headerHistoryTitle: 'අස්වනු ඉතිහාසය සහ සමුච්චිත අස්වැන්න',
+        lblSessionCount: 'මුළු වාර ගණන:',
+        thDate: 'දිනය',
+        thWeight: 'බර',
+        thNotes: 'තත්ත්වය / විස්තර',
+        thAction: 'ක්‍රියාව',
+        txtEmptyHarvestTitle: 'තවමත් අස්වනු සටහන් ඇතුළත් කර නොමැත.',
+        txtEmptyHarvestDesc: 'වම් පස ඇති පෝරමයෙන් අස්වනු දිනය සහ කිලෝග්‍රෑම් ප්‍රමාණය ඇතුළත් කර අස්වැන්න නිරීක්ෂණය කරන්න.',
+
+        confirmDelete: 'මෙම අස්වනු සටහන ඉවත් කිරීමට ඔබට විශ්වාසද?',
+        confirmReset: 'සියලුම වගා සටහන් සහ දිනයන් නැවත මුල් තත්ත්වයට පත් කිරීමට අවශ්‍යද? මෙය ආපසු හැරවිය නොහැක.',
+        alertInvalidInput: 'කරුණාකර වලංගු අස්වනු දිනයක් සහ බරක් (kg > 0) ඇතුළත් කරන්න.',
+        alertNoExport: 'බාගත කිරීමට අස්වනු වාර්තා නොමැත.',
+        demoLoadedMsg: 'නියැදි දත්ත සාර්ථකව පූරණය විය!\n\n• NPK යොදා දින 13යි -> හෙට යෙදීමේ අනතුරු ඇඟවීම\n• දිලීර නාශක යොදා දින 5යි -> තව දින 2කින් යෙදීමේ අනතුරු ඇඟවීම\n• වගා කාලය: දින 62ක්\n• අස්වනු සටහන් 3ක් ඇතුළත් විය',
+
+        // Tips
+        tipsTitle: '💡 නයි මිරිස් (Scotch Bonnet) වගා උපදේශන සටහන',
+        tipsBody: '• <strong>NPK පොහොර (දින 14)</strong>: අඛණ්ඩව මල් හටගැනීම සහ ශක්තිමත් අතු වර්ධනය සඳහා සෑම සති දෙකකට වරක් තුලිත පොහොර යොදන්න.<br>• <strong>දිලීර නාශක (දින 7)</strong>: තෙතමනය සහිත කාලගුණයේදී ඇන්ත්‍රැක්නෝස් (කරල් කුණුවීම) සහ කොළ කොඩවීම වැළැක්වීමට දින 7කට වරක් ආරක්‍ෂක දිලීර නාශක යොදන්න.<br>• <strong>හෝමෝන (දින 10)</strong>: අධික උෂ්ණත්වය හෝ අධික වැසි සහිත කාලවලදී මල් හැලීම වළක්වා කරල් පිහිටීම ඉහළ නැංවීමට මල් උත්තේජක යොදන්න.',
+        tipsSource: 'ශ්‍රී ලංකා කෘෂිකර්ම දෙපාර්තමේන්තු ප්‍රමිතීන් ඇසුරෙන්',
+        footerText1: 'නයි මිරිස් (Scotch Bonnet) නිරවද්‍ය වගා කළමනාකරණ පද්ධතිය · Standalone Web App',
+        footerText2: 'සියලු දත්ත ඔබගේ බ්‍රවුසරයේ සුරක්ෂිතව ස්වයංක්‍රීයව සුරැකේ · 100% Offline ක්‍රියා කරයි'
+      }
+    };
+
+    function t(key) {
+      return I18N[currentLang][key] || I18N['en'][key] || key;
+    }
+
+    // Set Language (Sinhala or English)
+    function setLanguage(lang) {
+      if (lang !== 'si' && lang !== 'en') return;
+      currentLang = lang;
+      try {
+        localStorage.setItem(LANG_STORAGE_KEY, lang);
+      } catch (e) {
+        console.error(e);
+      }
+      document.documentElement.lang = lang;
+      updateLanguageUI();
+      renderAll();
+    }
+
+    function updateLanguageUI() {
+      // Toggle button active states
+      document.getElementById('btnLangSi').classList.toggle('active', currentLang === 'si');
+      document.getElementById('btnLangEn').classList.toggle('active', currentLang === 'en');
+
+      // Update static text elements
+      document.getElementById('titlePart1').textContent = t('titlePart1');
+      document.getElementById('titlePart2').textContent = t('titlePart2');
+      document.getElementById('brandSubtitle').textContent = t('brandSubtitle');
+      document.getElementById('txtBtnDemo').textContent = t('btnDemo');
+      document.getElementById('txtBtnExport').textContent = t('btnExport');
+      document.getElementById('txtBtnReset').textContent = t('btnReset');
+
+      // KPIs
+      document.getElementById('lblKpiPlantDays').textContent = t('kpiPlantDaysLabel');
+      document.getElementById('unitDays1').textContent = t('unitDays');
+      document.getElementById('lblKpiTotalYield').textContent = t('kpiTotalYieldLabel');
+      document.getElementById('lblKpiNpk').textContent = t('kpiNpkLabel');
+      document.getElementById('lblKpiFungi').textContent = t('kpiFungiLabel');
+
+      // Section 1: Planting
+      document.getElementById('headerPlanting').textContent = t('headerPlanting');
+      document.getElementById('badgePlantingTag').textContent = t('badgePlantingTag');
+      document.getElementById('lblPlantingDate').textContent = t('lblPlantingDate');
+      document.getElementById('descPlanting').textContent = t('descPlanting');
+      document.getElementById('btnTodayPlanting').textContent = t('btnToday');
+      document.getElementById('lblGrowthPhasePrefix').textContent = t('lblGrowthPhasePrefix');
+
+      document.getElementById('stage1Title').textContent = t('stage1Title');
+      document.getElementById('stage1Range').textContent = t('stage1Range');
+      document.getElementById('stage2Title').textContent = t('stage2Title');
+      document.getElementById('stage2Range').textContent = t('stage2Range');
+      document.getElementById('stage3Title').textContent = t('stage3Title');
+      document.getElementById('stage3Range').textContent = t('stage3Range');
+      document.getElementById('stage4Title').textContent = t('stage4Title');
+      document.getElementById('stage4Range').textContent = t('stage4Range');
+
+      // Section 2: Schedules
+      document.getElementById('headerSchedules').textContent = t('headerSchedules');
+      document.getElementById('badgeSchedulesTag').textContent = t('badgeSchedulesTag');
+
+      document.getElementById('cardNpkTitle').textContent = t('cardNpkTitle');
+      document.getElementById('cardNpkSub').textContent = t('cardNpkSub');
+      document.getElementById('lblNpkDaysElapsed').textContent = t('lblNpkDaysElapsed');
+      document.getElementById('lblDateNpk').textContent = t('lblDateNpk');
+      document.getElementById('btnTodayNpk').textContent = t('btnToday');
+      document.getElementById('lblIntervalNpk').textContent = t('lblIntervalNpk');
+      document.getElementById('txtBtnApplyNpk').textContent = t('txtBtnApplyNpk');
+
+      document.getElementById('cardFungiTitle').textContent = t('cardFungiTitle');
+      document.getElementById('cardFungiSub').textContent = t('cardFungiSub');
+      document.getElementById('lblFungiDaysElapsed').textContent = t('lblFungiDaysElapsed');
+      document.getElementById('lblDateFungi').textContent = t('lblDateFungi');
+      document.getElementById('btnTodayFungi').textContent = t('btnToday');
+      document.getElementById('lblIntervalFungi').textContent = t('lblIntervalFungi');
+      document.getElementById('txtBtnApplyFungi').textContent = t('txtBtnApplyFungi');
+
+      document.getElementById('cardHormoneTitle').textContent = t('cardHormoneTitle');
+      document.getElementById('cardHormoneSub').textContent = t('cardHormoneSub');
+      document.getElementById('lblHormoneDaysElapsed').textContent = t('lblHormoneDaysElapsed');
+      document.getElementById('lblDateHormone').textContent = t('lblDateHormone');
+      document.getElementById('btnTodayHormone').textContent = t('btnToday');
+      document.getElementById('lblIntervalHormone').textContent = t('lblIntervalHormone');
+      document.getElementById('txtBtnApplyHormone').textContent = t('txtBtnApplyHormone');
+
+      // Section 3: Harvest
+      document.getElementById('headerHarvest').textContent = t('headerHarvest');
+      document.getElementById('badgeHarvestTag').textContent = t('badgeHarvestTag');
+      document.getElementById('formHarvestTitle').textContent = t('formHarvestTitle');
+      document.getElementById('lblHarvestDate').textContent = t('lblHarvestDate');
+      document.getElementById('btnTodayHarvest').textContent = t('btnToday');
+      document.getElementById('lblHarvestKg').textContent = t('lblHarvestKg');
+      document.getElementById('lblHarvestNotes').textContent = t('lblHarvestNotes');
+      document.getElementById('harvestNotes').placeholder = t('txtHarvestNotesPlaceholder');
+      document.getElementById('txtBtnRecordHarvest').textContent = t('txtBtnRecordHarvest');
+
+      document.getElementById('headerHistoryTitle').textContent = t('headerHistoryTitle');
+      document.getElementById('lblSessionCount').textContent = t('lblSessionCount');
+      document.getElementById('thDate').textContent = t('thDate');
+      document.getElementById('thWeight').textContent = t('thWeight');
+      document.getElementById('thNotes').textContent = t('thNotes');
+      document.getElementById('thAction').textContent = t('thAction');
+      document.getElementById('txtEmptyHarvestTitle').textContent = t('txtEmptyHarvestTitle');
+      document.getElementById('txtEmptyHarvestDesc').textContent = t('txtEmptyHarvestDesc');
+
+      // Tips & Footer
+      document.getElementById('tipsTitle').innerHTML = t('tipsTitle');
+      document.getElementById('tipsBody').innerHTML = t('tipsBody');
+      document.getElementById('tipsSource').textContent = t('tipsSource');
+      document.getElementById('footerText1').textContent = t('footerText1');
+      document.getElementById('footerText2').textContent = t('footerText2');
+
+      // Header live date
+      const now = new Date();
+      const locale = currentLang === 'si' ? 'si-LK' : 'en-US';
+      const options = { weekday: 'short', year: 'numeric', month: 'short', day: 'numeric' };
+      document.getElementById('liveDateText').textContent = `${t('todayPrefix')}${now.toLocaleDateString(locale, options)}`;
+    }
+
+    // Date formatting helper
+    function formatDateDisplay(dateStr) {
+      if (!dateStr) return currentLang === 'si' ? 'සටහන් කර නැත' : 'Not set';
+      try {
+        const parts = dateStr.split('-');
+        if (parts.length === 3) {
+          const d = new Date(parseInt(parts[0]), parseInt(parts[1]) - 1, parseInt(parts[2]));
+          const locale = currentLang === 'si' ? 'si-LK' : 'en-US';
+          return d.toLocaleDateString(locale, { month: 'short', day: 'numeric', year: 'numeric' });
+        }
+        return dateStr;
+      } catch (e) {
+        return dateStr;
+      }
+    }
+
+    // Days difference calculation
+    function calculateDaysPassed(dateStr) {
+      if (!dateStr) return null;
+      const [year, month, day] = dateStr.split('-').map(Number);
+      const targetDate = new Date(year, month - 1, day);
+      targetDate.setHours(0, 0, 0, 0);
+
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+
+      const diffTime = today.getTime() - targetDate.getTime();
+      return Math.floor(diffTime / (1000 * 60 * 60 * 24));
+    }
+
+    function getTodayString() {
+      const today = new Date();
+      const yyyy = today.getFullYear();
+      const mm = String(today.getMonth() + 1).padStart(2, '0');
+      const dd = String(today.getDate()).padStart(2, '0');
+      return `${yyyy}-${mm}-${dd}`;
+    }
+
+    function addDaysToDate(dateStr, days) {
+      if (!dateStr) return '';
+      const [y, m, d] = dateStr.split('-').map(Number);
+      const target = new Date(y, m - 1, d);
+      target.setDate(target.getDate() + days);
+      const yyyy = target.getFullYear();
+      const mm = String(target.getMonth() + 1).padStart(2, '0');
+      const dd = String(target.getDate()).padStart(2, '0');
+      return `${yyyy}-${mm}-${dd}`;
+    }
+
+    // Persistence
+    function saveData() {
+      try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(farmData));
+      } catch (e) {
+        console.error('Failed to save to localStorage:', e);
+      }
+    }
+
+    function loadData() {
+      try {
+        const saved = localStorage.getItem(STORAGE_KEY);
+        if (saved) {
+          farmData = Object.assign(farmData, JSON.parse(saved));
+        }
+      } catch (e) {
+        console.error('Failed to load from localStorage:', e);
+      }
+    }
+
+    function setDateFieldToday(fieldId) {
+      const todayStr = getTodayString();
+      const el = document.getElementById(fieldId);
+      if (el) {
+        el.value = todayStr;
+        handleFieldChange(fieldId, todayStr);
+      }
+    }
+
+    function markAppliedToday(fieldId) {
+      const todayStr = getTodayString();
+      const el = document.getElementById(fieldId);
+      if (el) {
+        el.value = todayStr;
+        handleFieldChange(fieldId, todayStr);
+      }
+    }
+
+    function handleFieldChange(fieldId, value) {
+      if (fieldId === 'plantingDate') farmData.plantingDate = value;
+      else if (fieldId === 'dateNpk') farmData.dateNpk = value;
+      else if (fieldId === 'dateFungicide') farmData.dateFungicide = value;
+      else if (fieldId === 'dateHormone') farmData.dateHormone = value;
+
+      saveData();
+      renderAll();
+    }
+
+    function handleIntervalChange(key, value) {
+      const val = parseInt(value, 10);
+      if (!isNaN(val) && val > 0) {
+        farmData.intervals[key] = val;
+        saveData();
+        renderAll();
+      }
+    }
+
+    function addQuickKg(amount) {
+      const input = document.getElementById('harvestKg');
+      const cur = parseFloat(input.value) || 0;
+      input.value = (cur + amount).toFixed(2);
+    }
+
+    // 1. Growing Days Tracker
+    function updatePlantingTracker() {
+      const days = calculateDaysPassed(farmData.plantingDate);
+      const kpiPlantDays = document.getElementById('kpiPlantDays');
+      const kpiPlantStage = document.getElementById('kpiPlantStage');
+      const stageDaysCounter = document.getElementById('stageDaysCounter');
+      const stageBadgeText = document.getElementById('stageBadgeText');
+      const stageProgressBar = document.getElementById('stageProgressBar');
+
+      ['stage1', 'stage2', 'stage3', 'stage4'].forEach(id => {
+        document.getElementById(id).classList.remove('active');
+      });
+
+      if (days === null || isNaN(days)) {
+        kpiPlantDays.innerHTML = `0 <span style="font-size: 1rem; font-weight: normal; color: var(--text-muted)">${t('unitDays')}</span>`;
+        kpiPlantStage.textContent = t('kpiPlantStageEmpty');
+        stageDaysCounter.textContent = `0 ${t('unitDays')}`;
+        stageBadgeText.textContent = t('stageAwaiting');
+        stageProgressBar.style.width = '0%';
+        return;
+      }
+
+      const displayDays = Math.max(0, days);
+      const weeks = Math.floor(displayDays / 7);
+      const remainingDays = displayDays % 7;
+      const weekStr = weeks > 0 ? ` · ${t('weekWord')} ${weeks}${remainingDays > 0 ? ` +${remainingDays}d` : ''}` : '';
+
+      kpiPlantDays.innerHTML = `${displayDays} <span style="font-size: 1rem; font-weight: normal; color: var(--text-muted)">${t('unitDays')}</span>`;
+      stageDaysCounter.textContent = `${displayDays} ${t('growingDaysSuffix')}${weekStr}`;
+
+      let stageName = '';
+      let progressPercent = 0;
+
+      if (displayDays <= 25) {
+        stageName = t('stage1Name');
+        document.getElementById('stage1').classList.add('active');
+        progressPercent = (displayDays / 25) * 25;
+      } else if (displayDays <= 50) {
+        stageName = t('stage2Name');
+        document.getElementById('stage2').classList.add('active');
+        progressPercent = 25 + ((displayDays - 25) / 25) * 25;
+      } else if (displayDays <= 75) {
+        stageName = t('stage3Name');
+        document.getElementById('stage3').classList.add('active');
+        progressPercent = 50 + ((displayDays - 50) / 25) * 25;
+      } else {
+        stageName = t('stage4Name');
+        document.getElementById('stage4').classList.add('active');
+        progressPercent = Math.min(100, 75 + ((displayDays - 75) / 50) * 25);
+      }
+
+      kpiPlantStage.textContent = stageName;
+      stageBadgeText.textContent = stageName;
+      stageProgressBar.style.width = `${Math.min(100, Math.max(4, progressPercent))}%`;
+    }
+
+    // 2. Interval & Reminders Engine
+    function updateSchedulesAndAlerts() {
+      const alertsContainer = document.getElementById('alertsContainer');
+      alertsContainer.innerHTML = '';
+      const alerts = [];
+
+      const intervalNpk = farmData.intervals.npk || 14;
+      const intervalFungi = farmData.intervals.fungicide || 7;
+      const intervalHormone = farmData.intervals.hormone || 10;
+
+      document.getElementById('displayCycleNpk').textContent = `${t('intervalPrefix')}${intervalNpk} ${t('daysWord')}`;
+      document.getElementById('displayCycleFungi').textContent = `${t('intervalPrefix')}${intervalFungi} ${t('daysWord')}`;
+      document.getElementById('displayCycleHormone').textContent = `${t('intervalPrefix')}${intervalHormone} ${t('daysWord')}`;
+
+      // NPK Evaluation
+      const npkDays = calculateDaysPassed(farmData.dateNpk);
+      const cardNpk = document.getElementById('cardNpk');
+      const badgeNpk = document.getElementById('badgeNpk');
+      const displayDaysNpk = document.getElementById('displayDaysNpk');
+      const displayDueNpk = document.getElementById('displayDueNpk');
+      const kpiNpkDays = document.getElementById('kpiNpkDays');
+      const kpiNpkStatus = document.getElementById('kpiNpkStatus');
+
+      cardNpk.className = 'schedule-card';
+
+      if (npkDays === null) {
+        displayDaysNpk.textContent = '--';
+        displayDueNpk.textContent = t('noDateSet');
+        badgeNpk.className = 'status-pill pill-amber';
+        badgeNpk.textContent = t('notSetBadge');
+        kpiNpkDays.textContent = '--';
+        kpiNpkStatus.textContent = `${t('cyclePrefix')}${intervalNpk} ${t('unitDays')}`;
+      } else {
+        displayDaysNpk.textContent = `${npkDays}d`;
+        const daysRemaining = intervalNpk - npkDays;
+        kpiNpkDays.textContent = `${npkDays}${t('daysAgoSuffix')}`;
+
+        // Specific Alert: NPK due tomorrow (13 days on 14d cycle)
+        if (daysRemaining === 1) {
+          cardNpk.classList.add('state-due-tomorrow');
+          badgeNpk.className = 'status-pill pill-amber';
+          badgeNpk.textContent = t('dueTomorrowBadge');
+          displayDueNpk.innerHTML = `<span class="text-warning">${t('dueTomorrowText')} (${npkDays}/${intervalNpk})</span>`;
+          kpiNpkStatus.textContent = t('dueTomorrowText');
+
+          alerts.push({
+            type: 'urgent',
+            icon: '⚠️',
+            badge: t('dueTomorrowBadge'),
+            title: t('alertNpkTomorrowTitle'),
+            desc: t('alertNpkTomorrowDesc').replace('{date}', formatDateDisplay(farmData.dateNpk)).replace('{interval}', intervalNpk)
+          });
+        } else if (daysRemaining === 0) {
+          cardNpk.classList.add('state-due-tomorrow');
+          badgeNpk.className = 'status-pill pill-red';
+          badgeNpk.textContent = t('dueTodayBadge');
+          displayDueNpk.innerHTML = `<span class="text-danger">${t('dueTodayText')} (${intervalNpk}/${intervalNpk})</span>`;
+          kpiNpkStatus.textContent = t('dueTodayText');
+
+          alerts.push({
+            type: 'urgent',
+            icon: '🚨',
+            badge: t('dueTodayBadge'),
+            title: t('alertNpkTodayTitle').replace('{interval}', intervalNpk),
+            desc: t('alertNpkTodayDesc').replace('{interval}', intervalNpk)
+          });
+        } else if (daysRemaining < 0) {
+          const overdueDays = Math.abs(daysRemaining);
+          cardNpk.classList.add('state-overdue');
+          badgeNpk.className = 'status-pill pill-red';
+          badgeNpk.textContent = `${overdueDays}${t('overdueSuffix')}`;
+          displayDueNpk.innerHTML = `<span class="text-danger">${t('overdueByText')}${overdueDays} ${t('unitDays')}</span>`;
+          kpiNpkStatus.textContent = `${t('overdueByText')}${overdueDays}d`;
+
+          alerts.push({
+            type: 'urgent',
+            icon: '🔴',
+            badge: `${overdueDays}d OVERDUE`,
+            title: t('alertNpkOverdueTitle').replace('{overdue}', overdueDays),
+            desc: t('alertNpkOverdueDesc').replace('{days}', npkDays).replace('{date}', formatDateDisplay(farmData.dateNpk))
+          });
+        } else {
+          badgeNpk.className = 'status-pill pill-green';
+          badgeNpk.textContent = t('onScheduleBadge');
+          displayDueNpk.innerHTML = `<span class="text-success">${t('dueInText')}${daysRemaining} ${t('unitDays')}</span>`;
+          kpiNpkStatus.textContent = `${t('nextInText')}${daysRemaining}d`;
+        }
+      }
+
+      // Fungicide Evaluation
+      const fungiDays = calculateDaysPassed(farmData.dateFungicide);
+      const cardFungicide = document.getElementById('cardFungicide');
+      const badgeFungi = document.getElementById('badgeFungi');
+      const displayDaysFungi = document.getElementById('displayDaysFungi');
+      const displayDueFungi = document.getElementById('displayDueFungi');
+      const kpiFungiDays = document.getElementById('kpiFungiDays');
+      const kpiFungiStatus = document.getElementById('kpiFungiStatus');
+
+      cardFungicide.className = 'schedule-card';
+
+      if (fungiDays === null) {
+        displayDaysFungi.textContent = '--';
+        displayDueFungi.textContent = t('noDateSet');
+        badgeFungi.className = 'status-pill pill-amber';
+        badgeFungi.textContent = t('notSetBadge');
+        kpiFungiDays.textContent = '--';
+        kpiFungiStatus.textContent = `${t('cyclePrefix')}${intervalFungi} ${t('unitDays')}`;
+      } else {
+        displayDaysFungi.textContent = `${fungiDays}d`;
+        const daysRemaining = intervalFungi - fungiDays;
+        kpiFungiDays.textContent = `${fungiDays}${t('daysAgoSuffix')}`;
+
+        // Specific Alert: Fungicide applied 5 days ago (re-application in 2 days on 7-day cycle)
+        if (fungiDays === 5 && intervalFungi === 7) {
+          cardFungicide.classList.add('state-warning-5days');
+          badgeFungi.className = 'status-pill pill-orange';
+          badgeFungi.textContent = currentLang === 'si' ? 'තව දින 2කින්' : 'RE-APPLY IN 2 DAYS';
+          displayDueFungi.innerHTML = `<span style="color: #fb923c; font-weight:700;">⚠️ ${t('dueInText')}2 ${t('unitDays')} (Day 5/7)</span>`;
+          kpiFungiStatus.textContent = currentLang === 'si' ? 'තව දින 2කින් නැවත යෙදීම' : 'Re-apply in 2 days';
+
+          alerts.push({
+            type: 'warning',
+            icon: '🛡️',
+            badge: currentLang === 'si' ? 'දින 5 සිහිකැඳවීම' : 'Fungicide Warning',
+            title: t('alertFungi5DaysTitle'),
+            desc: t('alertFungi5DaysDesc').replace('{date}', formatDateDisplay(farmData.dateFungicide))
+          });
+        } else if (daysRemaining === 1) {
+          cardFungicide.classList.add('state-due-tomorrow');
+          badgeFungi.className = 'status-pill pill-amber';
+          badgeFungi.textContent = t('dueTomorrowBadge');
+          displayDueFungi.innerHTML = `<span class="text-warning">${t('dueTomorrowText')} (${fungiDays}/${intervalFungi})</span>`;
+          kpiFungiStatus.textContent = t('dueTomorrowText');
+
+          alerts.push({
+            type: 'warning',
+            icon: '⚠️',
+            badge: t('dueTomorrowBadge'),
+            title: t('alertFungiTomorrowTitle').replace('{days}', fungiDays),
+            desc: t('alertFungiTomorrowDesc')
+          });
+        } else if (daysRemaining === 0) {
+          cardFungicide.classList.add('state-overdue');
+          badgeFungi.className = 'status-pill pill-red';
+          badgeFungi.textContent = t('dueTodayBadge');
+          displayDueFungi.innerHTML = `<span class="text-danger">${t('dueTodayText')} (${intervalFungi}/${intervalFungi})</span>`;
+          kpiFungiStatus.textContent = t('dueTodayText');
+
+          alerts.push({
+            type: 'urgent',
+            icon: '🚨',
+            badge: t('dueTodayBadge'),
+            title: t('alertFungiTodayTitle').replace('{interval}', intervalFungi),
+            desc: t('alertFungiTodayDesc').replace('{interval}', intervalFungi)
+          });
+        } else if (daysRemaining < 0) {
+          const overdueDays = Math.abs(daysRemaining);
+          cardFungicide.classList.add('state-overdue');
+          badgeFungi.className = 'status-pill pill-red';
+          badgeFungi.textContent = `${overdueDays}${t('overdueSuffix')}`;
+          displayDueFungi.innerHTML = `<span class="text-danger">${t('overdueByText')}${overdueDays} ${t('unitDays')}</span>`;
+          kpiFungiStatus.textContent = `${t('overdueByText')}${overdueDays}d`;
+
+          alerts.push({
+            type: 'urgent',
+            icon: '🔴',
+            badge: `${overdueDays}d OVERDUE`,
+            title: t('alertFungiOverdueTitle').replace('{overdue}', overdueDays),
+            desc: t('alertFungiOverdueDesc').replace('{days}', fungiDays).replace('{date}', formatDateDisplay(farmData.dateFungicide))
+          });
+        } else {
+          badgeFungi.className = 'status-pill pill-green';
+          badgeFungi.textContent = t('protectedBadge');
+          displayDueFungi.innerHTML = `<span class="text-success">${t('dueInText')}${daysRemaining} ${t('unitDays')}</span>`;
+          kpiFungiStatus.textContent = `${t('protectedBadge')} (${daysRemaining}d)`;
+        }
+      }
+
+      // Hormone Evaluation
+      const hormoneDays = calculateDaysPassed(farmData.dateHormone);
+      const cardHormone = document.getElementById('cardHormone');
+      const badgeHormone = document.getElementById('badgeHormone');
+      const displayDaysHormone = document.getElementById('displayDaysHormone');
+      const displayDueHormone = document.getElementById('displayDueHormone');
+
+      cardHormone.className = 'schedule-card';
+
+      if (hormoneDays === null) {
+        displayDaysHormone.textContent = '--';
+        displayDueHormone.textContent = t('noDateSet');
+        badgeHormone.className = 'status-pill pill-amber';
+        badgeHormone.textContent = t('notSetBadge');
+      } else {
+        displayDaysHormone.textContent = `${hormoneDays}d`;
+        const daysRemaining = intervalHormone - hormoneDays;
+
+        if (daysRemaining < 0) {
+          const overdueDays = Math.abs(daysRemaining);
+          cardHormone.classList.add('state-overdue');
+          badgeHormone.className = 'status-pill pill-red';
+          badgeHormone.textContent = `${overdueDays}${t('overdueSuffix')}`;
+          displayDueHormone.innerHTML = `<span class="text-danger">${t('overdueByText')}${overdueDays} ${t('unitDays')}</span>`;
+        } else if (daysRemaining === 1) {
+          cardHormone.classList.add('state-due-tomorrow');
+          badgeHormone.className = 'status-pill pill-amber';
+          badgeHormone.textContent = t('dueTomorrowBadge');
+          displayDueHormone.innerHTML = `<span class="text-warning">${t('dueTomorrowText')}</span>`;
+        } else {
+          badgeHormone.className = 'status-pill pill-green';
+          badgeHormone.textContent = t('onTrackBadge');
+          displayDueHormone.innerHTML = `<span class="text-success">${t('dueInText')}${daysRemaining} ${t('unitDays')}</span>`;
+        }
+      }
+
+      // Render Dynamic Alert Cards
+      if (alerts.length > 0) {
+        alerts.forEach(item => {
+          const alertEl = document.createElement('div');
+          alertEl.className = `alert-card ${item.type} pulse`;
+          alertEl.innerHTML = `
+            <div class="alert-icon">${item.icon}</div>
+            <div class="alert-content">
+              <div class="alert-title">
+                <span>${item.title}</span>
+                <span class="alert-badge">${item.badge}</span>
+              </div>
+              <div class="alert-desc">${item.desc}</div>
+            </div>
+          `;
+          alertsContainer.appendChild(alertEl);
+        });
+      } else {
+        const okBanner = document.createElement('div');
+        okBanner.className = 'alert-card info';
+        okBanner.innerHTML = `
+          <div class="alert-icon">🌱</div>
+          <div class="alert-content">
+            <div class="alert-title">
+              <span>${t('alertOptimalTitle')}</span>
+              <span class="alert-badge" style="background: rgba(16,185,129,0.25); color: #6ee7b7; border: 1px solid #10b981;">${t('alertOptimalBadge')}</span>
+            </div>
+            <div class="alert-desc">${t('alertOptimalDesc')}</div>
+          </div>
+        `;
+        alertsContainer.appendChild(okBanner);
+      }
+    }
+
+    // 3. Harvest Logger & History Table
+    function handleHarvestSubmit(event) {
+      event.preventDefault();
+      const dateVal = document.getElementById('harvestDate').value;
+      const kgVal = parseFloat(document.getElementById('harvestKg').value);
+      const notesVal = document.getElementById('harvestNotes').value.trim();
+
+      if (!dateVal || isNaN(kgVal) || kgVal <= 0) {
+        alert(t('alertInvalidInput'));
+        return;
+      }
+
+      const defaultNote = currentLang === 'si' ? 'නෙළන ලද නැවුම් අස්වැන්න' : 'Fresh picking';
+
+      const newEntry = {
+        id: Date.now().toString(),
+        date: dateVal,
+        kg: kgVal,
+        notes: notesVal || defaultNote
+      };
+
+      farmData.harvests.unshift(newEntry);
+      saveData();
+
+      document.getElementById('harvestKg').value = '';
+      document.getElementById('harvestNotes').value = '';
+      setDateFieldToday('harvestDate');
+
+      renderHarvests();
+    }
+
+    function deleteHarvest(id) {
+      if (confirm(t('confirmDelete'))) {
+        farmData.harvests = farmData.harvests.filter(h => h.id !== id);
+        saveData();
+        renderHarvests();
+      }
+    }
+
+    function renderHarvests() {
+      const tableBody = document.getElementById('harvestTableBody');
+      const emptyState = document.getElementById('harvestEmptyState');
+      const tableSessionCount = document.getElementById('tableSessionCount');
+      const kpiTotalYield = document.getElementById('kpiTotalYield');
+      const kpiHarvestCount = document.getElementById('kpiHarvestCount');
+
+      tableBody.innerHTML = '';
+
+      if (!farmData.harvests || farmData.harvests.length === 0) {
+        emptyState.style.display = 'block';
+        tableSessionCount.textContent = '0';
+        kpiTotalYield.innerHTML = `0.00 <span style="font-size: 1rem; font-weight: normal; color: var(--text-muted)">kg</span>`;
+        kpiHarvestCount.textContent = t('kpiHarvestCountEmpty');
+        return;
+      }
+
+      emptyState.style.display = 'none';
+
+      const sorted = [...farmData.harvests].sort((a, b) => new Date(b.date) - new Date(a.date));
+
+      let totalKg = 0;
+      sorted.forEach((item, index) => {
+        totalKg += Number(item.kg);
+
+        const row = document.createElement('tr');
+        row.innerHTML = `
+          <td style="color: var(--text-muted); font-size: 0.78rem;">${sorted.length - index}</td>
+          <td style="font-weight: 600;">${formatDateDisplay(item.date)}</td>
+          <td><span class="weight-badge">${item.kg.toFixed(2)} kg</span></td>
+          <td style="color: var(--text-muted);">${item.notes || '-'}</td>
+          <td style="text-align: right;">
+            <button class="btn-delete" onclick="deleteHarvest('${item.id}')" title="Delete harvest">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+            </button>
+          </td>
+        `;
+        tableBody.appendChild(row);
+      });
+
+      tableSessionCount.textContent = `${sorted.length}`;
+      kpiTotalYield.innerHTML = `${totalKg.toFixed(2)} <span style="font-size: 1rem; font-weight: normal; color: var(--text-muted)">kg</span>`;
+      
+      const sessionWord = currentLang === 'si' ? 'අස්වනු වාර' : 'Sessions';
+      kpiHarvestCount.textContent = `${sorted.length} ${sessionWord} (Avg ${(totalKg / sorted.length).toFixed(1)} kg)`;
+    }
+
+    // Export CSV
+    function exportCsv() {
+      if (!farmData.harvests || farmData.harvests.length === 0) {
+        alert(t('alertNoExport'));
+        return;
+      }
+
+      let csv = 'ID,Date,Weight_kg,Notes\n';
+      farmData.harvests.forEach(h => {
+        const cleanNotes = (h.notes || '').replace(/"/g, '""');
+        csv += `"${h.id}","${h.date}",${h.kg},"${cleanNotes}"\n`;
+      });
+
+      const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.setAttribute('href', url);
+      link.setAttribute('download', `Nai_Miris_Harvest_${getTodayString()}.csv`);
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    }
+
+    // Load Demo Data for specific reminder tests:
+    // - NPK applied 13 days ago (14-day cycle -> due tomorrow!)
+    // - Fungicide applied 5 days ago (7-day cycle -> needs re-application in 2 days!)
+    function loadDemoData() {
+      const today = new Date();
+      
+      const dNpk = new Date();
+      dNpk.setDate(today.getDate() - 13);
+
+      const dFungi = new Date();
+      dFungi.setDate(today.getDate() - 5);
+
+      const dHormone = new Date();
+      dHormone.setDate(today.getDate() - 4);
+
+      const dPlant = new Date();
+      dPlant.setDate(today.getDate() - 62);
+
+      const note1 = currentLang === 'si' ? 'A ශ්‍රේණියේ ඉදුණු රතු නයි මිරිස්' : 'Grade A Red Ripe Scotch Bonnet';
+      const note2 = currentLang === 'si' ? 'අපනයන තත්ත්වයේ 02 වන තොගය' : 'Export batch 02';
+      const note3 = currentLang === 'si' ? 'පළමු අස්වනු වටය' : 'First ripe picking';
+
+      farmData = {
+        plantingDate: dPlant.toISOString().split('T')[0],
+        dateNpk: dNpk.toISOString().split('T')[0],
+        dateFungicide: dFungi.toISOString().split('T')[0],
+        dateHormone: dHormone.toISOString().split('T')[0],
+        intervals: { npk: 14, fungicide: 7, hormone: 10 },
+        harvests: [
+          { id: '101', date: getTodayString(), kg: 14.5, notes: note1 },
+          { id: '102', date: addDaysToDate(getTodayString(), -4), kg: 18.2, notes: note2 },
+          { id: '103', date: addDaysToDate(getTodayString(), -9), kg: 12.0, notes: note3 }
+        ]
+      };
+
+      saveData();
+      syncInputsFromState();
+      renderAll();
+
+      alert(t('demoLoadedMsg'));
+    }
+
+    function resetData() {
+      if (confirm(t('confirmReset'))) {
+        farmData = {
+          plantingDate: '',
+          dateNpk: '',
+          dateFungicide: '',
+          dateHormone: '',
+          intervals: { npk: 14, fungicide: 7, hormone: 10 },
+          harvests: []
+        };
+        saveData();
+        syncInputsFromState();
+        renderAll();
+      }
+    }
+
+    function syncInputsFromState() {
+      document.getElementById('plantingDate').value = farmData.plantingDate || '';
+      document.getElementById('dateNpk').value = farmData.dateNpk || '';
+      document.getElementById('dateFungicide').value = farmData.dateFungicide || '';
+      document.getElementById('dateHormone').value = farmData.dateHormone || '';
+      
+      document.getElementById('intervalNpk').value = farmData.intervals?.npk || 14;
+      document.getElementById('intervalFungi').value = farmData.intervals?.fungicide || 7;
+      document.getElementById('intervalHormone').value = farmData.intervals?.hormone || 10;
+      
+      document.getElementById('harvestDate').value = getTodayString();
+    }
+
+    function renderAll() {
+      updatePlantingTracker();
+      updateSchedulesAndAlerts();
+      renderHarvests();
+    }
+
+    // Initialize on load
+    window.addEventListener('DOMContentLoaded', () => {
+      // Load saved language preference or default to Sinhala ('si')
+      try {
+        const savedLang = localStorage.getItem(LANG_STORAGE_KEY);
+        if (savedLang === 'en' || savedLang === 'si') {
+          currentLang = savedLang;
+        }
+      } catch (e) {
+        console.error(e);
+      }
+
+      ['plantingDate', 'dateNpk', 'dateFungicide', 'dateHormone'].forEach(fieldId => {
+        const el = document.getElementById(fieldId);
+        if (el) {
+          el.addEventListener('change', (e) => {
+            handleFieldChange(fieldId, e.target.value);
+          });
+        }
+      });
+
+      document.getElementById('btnLoadDemo').addEventListener('click', loadDemoData);
+      document.getElementById('btnExportCsv').addEventListener('click', exportCsv);
+      document.getElementById('btnResetData').addEventListener('click', resetData);
+
+      document.getElementById('harvestDate').value = getTodayString();
+
+      loadData();
+
+      // If empty on first visit, provide the preset scenario so user sees active alerts
+      if (!farmData.plantingDate && !farmData.dateNpk && !farmData.dateFungicide) {
+        const today = new Date();
+        const dNpk = new Date();
+        dNpk.setDate(today.getDate() - 13);
+        const dFungi = new Date();
+        dFungi.setDate(today.getDate() - 5);
+        const dPlant = new Date();
+        dPlant.setDate(today.getDate() - 58);
+
+        farmData.plantingDate = dPlant.toISOString().split('T')[0];
+        farmData.dateNpk = dNpk.toISOString().split('T')[0];
+        farmData.dateFungicide = dFungi.toISOString().split('T')[0];
+        farmData.dateHormone = addDaysToDate(getTodayString(), -3);
+        farmData.intervals = { npk: 14, fungicide: 7, hormone: 10 };
+        farmData.harvests = [
+          { id: '1', date: addDaysToDate(getTodayString(), -3), kg: 16.5, notes: currentLang === 'si' ? 'A ශ්‍රේණියේ පළමු නෙළීම' : 'Grade A First Flush' },
+          { id: '2', date: addDaysToDate(getTodayString(), -7), kg: 11.2, notes: currentLang === 'si' ? 'නැවුම් කොළ හා ඉදුණු කරල්' : 'Fresh green & ripe picking' }
+        ];
+        saveData();
+      }
+
+      updateLanguageUI();
+      syncInputsFromState();
+      renderAll();
+    });
+  </script>
+</body>
+</html>
 
