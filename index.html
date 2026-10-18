@@ -1,325 +1,220 @@
-<!DOCTYPE html>
-<html lang="si">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Scotch Bonnet - Weather, Water Supply & Harvest Management</title>
-<!-- Chart.js Library for Harvest Analytics -->
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-<style>
-  :root { color-scheme: dark; --bg:#06140d; --card:#0c2118; --line:#1f4a35; --text:#e8f5ee; --muted:#8fb5a0; --green:#3ddc84; --amber:#f5b942; --red:#ff6b6b; --blue:#5bc0ff; }
-  * { box-sizing: border-box; }
-  body { margin:0; background:var(--bg); color:var(--text); font-family: system-ui, "Noto Sans Sinhala", "Iskoola Pota", sans-serif; padding: env(safe-area-inset-top,0px) 16px env(safe-area-inset-bottom,0px); }
-  .wrap { max-width: 1100px; margin: 0 auto; padding: 16px 0 32px; }
-  h1 { font-size: 22px; margin: 8px 0 4px; }
-  h2 { font-size: 16px; margin: 0 0 12px; color: var(--green); }
-  .sub { color: var(--muted); font-size: 13px; margin-bottom: 16px; }
-  .grid { display: grid; gap: 14px; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); }
-  .card { background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 16px; }
-  .wide { grid-column: 1 / -1; }
-  .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(110px, 1fr)); gap: 10px; margin-bottom: 14px; }
-  .stat { background: #092017; border: 1px solid var(--line); border-radius: 10px; padding: 10px; }
-  .stat .k { color: var(--muted); font-size: 12px; }
-  .stat .v { font-size: 22px; font-weight: 700; margin-top: 4px; }
-  .days { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; }
-  .day { background: #092017; border: 1px solid var(--line); border-radius: 10px; padding: 10px; font-size: 13px; }
-  .day .d { font-weight: 700; margin-bottom: 6px; }
-  .tag { display: inline-block; padding: 2px 8px; border-radius: 999px; font-size: 11px; margin-top: 6px; }
-  .ok { background: rgba(61,220,132,.15); color: var(--green); }
-  .warn { background: rgba(245,185,66,.15); color: var(--amber); }
-  .skip { background: rgba(91,192,255,.15); color: var(--blue); }
-  .banner { font-size: 12px; color: var(--amber); margin-bottom: 10px; }
-  label { display: block; font-size: 13px; color: var(--muted); margin: 10px 0 4px; }
-  input, select, button { font: inherit; border-radius: 8px; border: 1px solid var(--line); background: #092017; color: var(--text); padding: 9px 10px; width: 100%; }
-  button { background: var(--green); color: #04110a; font-weight: 700; border: none; cursor: pointer; margin-top: 12px; }
-  .row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-  .big { font-size: 28px; font-weight: 800; color: var(--green); }
-  .slots { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 8px; }
-  .slot { background: rgba(61,220,132,.12); border: 1px solid var(--green); border-radius: 8px; padding: 6px 10px; font-size: 14px; }
-  table { width: 100%; border-collapse: collapse; font-size: 13px; }
-  th, td { text-align: left; padding: 8px 6px; border-bottom: 1px solid var(--line); }
-  th { color: var(--muted); font-weight: 600; }
-  .del { background: none; color: var(--red); width: auto; margin: 0; padding: 2px 6px; }
-  .note { color: var(--muted); font-size: 12px; margin-top: 10px; }
-</style>
-</head>
-<body>
-<div class="wrap">
-  <h1>නයි මිරිස් (Scotch Bonnet) - කාලගුණය, ජල සැපයුම සහ අස්වනු පාලනය</h1>
-  <div class="sub">Weather, Irrigation & Harvest Management · <span id="loc">Kurunegala, LK</span></div>
-
-  <div class="grid">
-    <!-- WEATHER -->
-    <section class="card wide">
-      <h2>🌦 කාලගුණය / Weather</h2>
-      <div id="weatherBanner" class="banner"></div>
-      <div class="stats">
-        <div class="stat"><div class="k">උෂ්ණත්වය / Temp</div><div class="v" id="wTemp">-</div></div>
-        <div class="stat"><div class="k">ආර්ද්‍රතාව / Humidity</div><div class="v" id="wHum">-</div></div>
-        <div class="stat"><div class="k">සුළං / Wind</div><div class="v" id="wWind">-</div></div>
-        <div class="stat"><div class="k">අද වර්ෂාව / Rain chance</div><div class="v" id="wRain">-</div></div>
-      </div>
-      <div class="days" id="forecast"></div>
-    </section>
-
-    <!-- WATER SUPPLY SETTINGS -->
-    <section class="card">
-      <h2>💧 ජල සැපයුම් සැකසුම් / Settings</h2>
-      <div class="row">
-        <div><label>පැළ ගණන / Plants</label><input type="number" id="plants" value="100" min="1"></div>
-        <div><label>පැළයකට ලීටර් / L per plant</label><input type="number" id="base" value="1.5" min="0" step="0.1"></div>
-      </div>
-      <label>වර්ධන අවධිය / Growth stage</label>
-      <select id="stage">
-        <option value="0.6">පැළ අවධිය / Seedling (x0.6)</option>
-        <option value="1.0" selected>වර්ධන / Vegetative (x1.0)</option>
-        <option value="1.2">මල් අවධිය / Flowering (x1.2)</option>
-        <option value="1.4">ගෙඩි අවධිය / Fruiting (x1.4)</option>
-      </select>
-      <button onclick="render()">යාවත්කාලීන කරන්න / Update</button>
-    </section>
-
-    <!-- TODAY'S PLAN -->
-    <section class="card">
-      <h2>⏰ අද ජල සැපයුම් වේලාව / Today's Water Time</h2>
-      <div id="todayPlan"></div>
-    </section>
-
-    <!-- WATER LOG -->
-    <section class="card wide">
-      <h2>📒 ජල සැපයුම් සටහන / Water Log</h2>
-      <div class="row">
-        <div><label>දිනය / Date</label><input type="date" id="logDate"></div>
-        <div><label>ලීටර් / Liters</label><input type="number" id="logLiters" min="0" step="0.5"></div>
-      </div>
-      <label>වේලාව / Time</label>
-      <input type="time" id="logTime" value="06:00">
-      <button onclick="addLog()">එකතු කරන්න / Add entry</button>
-      <div style="overflow-x:auto; margin-top:12px">
-        <table>
-          <thead><tr><th>දිනය / Date</th><th>වේලාව / Time</th><th>ලීටර් / L</th><th></th></tr></thead>
-          <tbody id="logBody"></tbody>
-        </table>
-      </div>
-      <div class="note">Total supplied: <b id="logTotal">0</b> L</div>
-    </section>
-
-    <!-- HARVEST & REVENUE LOG -->
-    <section class="card wide" id="harvestSection">
-      <h2>📦 අස්වනු සහ ආදායම් සටහන / Harvest & Revenue Log</h2>
-      <div class="row">
-        <div><label>දිනය / Date</label><input type="date" id="harvestDate"></div>
-        <div><label>අස්වැන්න (kg) / Weight</label><input type="number" id="harvestKg" min="0" step="0.1" placeholder="උදා: 5.2"></div>
-      </div>
-      <div class="row">
-        <div><label>1 kg මිල (රු.) / Price per kg</label><input type="number" id="harvestPrice" min="0" step="1" placeholder="උදා: 450"></div>
-        <div><label>සටහන / Notes</label><input type="text" id="harvestNotes" placeholder="උදා: 1 වන මුරය"></div>
-      </div>
-      <button onclick="addHarvest()">අස්වැන්න එකතු කරන්න / Add Harvest</button>
-
-      <div style="overflow-x:auto; margin-top:15px">
-        <table id="harvestTable">
-          <thead>
-            <tr><th>දිනය / Date</th><th>බර (kg)</th><th>1 kg මිල (රු.)</th><th>එකතුව (රු.)</th><th>සටහන්</th><th></th></tr>
-          </thead>
-          <tbody id="harvestTableBody"></tbody>
-        </table>
-      </div>
-      <div class="note">මුළු අස්වැන්න: <b id="harvestTotalKg">0.00</b> kg · මුළු ආදායම: රු. <b id="harvestTotalRev">0.00</b></div>
-    </section>
-  </div>
-</div>
-
-<script>
-// Global State Storage
-window.farmData = {
-  harvests: []
-};
-
-const LOC = { lat: 7.4863, lon: 80.3647, name: "Kurunegala, LK" };
-const API = `https://api.open-meteo.com/v1/forecast?latitude=${LOC.lat}&longitude=${LOC.lon}` +
-  `&current=temperature_2m,relative_humidity_2m,wind_speed_10m` +
-  `&daily=temperature_2m_max,temperature_2m_min,precipitation_probability_max,precipitation_sum` +
-  `&timezone=Asia%2FColombo&forecast_days=5`;
-
-let weather = null;
-let logs = [];
-
-function demoWeather() {
-  const pattern = [
-    { tmax: 33, tmin: 23, rain: 20, mm: 0 },
-    { tmax: 31, tmin: 23, rain: 75, mm: 14 },
-    { tmax: 30, tmin: 22, rain: 45, mm: 4 },
-    { tmax: 34, tmin: 24, rain: 10, mm: 0 },
-    { tmax: 32, tmin: 23, rain: 30, mm: 1 }
-  ];
-  const days = pattern.map((p, i) => {
-    const d = new Date(); d.setDate(d.getDate() + i);
-    return { date: d.toISOString().slice(0, 10), ...p };
-  });
-  return { current: { temp: 29, hum: 78, wind: 12 }, days, source: "demo" };
-}
-
-async function loadWeather() {
-  try {
-    const r = await fetch(API);
-    if (!r.ok) throw new Error("HTTP " + r.status);
-    const j = await r.json();
-    const days = j.daily.time.map((t, i) => ({
-      date: t,
-      tmax: j.daily.temperature_2m_max[i],
-      tmin: j.daily.temperature_2m_min[i],
-      rain: j.daily.precipitation_probability_max[i] ?? 0,
-      mm: j.daily.precipitation_sum[i] ?? 0
-    }));
-    weather = { current: { temp: j.current.temperature_2m, hum: j.current.relative_humidity_2m, wind: j.current.wind_speed_10m }, days, source: "live" };
-  } catch (e) {
-    weather = demoWeather();
-  }
-  document.getElementById("weatherBanner").textContent =
-    weather.source === "live" ? "" : "⚠ Live weather unavailable - showing demo data. / සජීවී දත්ත නොලැබුණි - ආදර්ශ දත්ත පෙන්වයි.";
-  render();
-}
-
-function planDay(day) {
-  const plants = +document.getElementById("plants").value || 0;
-  const base = +document.getElementById("base").value || 0;
-  const stage = +document.getElementById("stage").value;
-  let liters = plants * base * stage;
-  let slots = [], status, reason;
-
-  if (day.mm >= 10 || day.rain >= 70) {
-    liters = 0; status = "skip";
-    reason = "වර්ෂාව අපේක්ෂිතයි - වාරිකය නවත්වන්න / Rain expected, skip";
-  } else {
-    if (day.rain >= 40) { liters *= 0.5; status = "warn"; reason = "වර්ෂා සම්භාවිතාව මධ්‍යම - 50% / Moderate rain, 50%"; }
-    else { status = "ok"; reason = "සාමාන්‍ය දිනයක් / Normal day"; }
-    if (day.tmax >= 33) {
-      liters *= 1.2;
-      slots = ["05:30 - 06:30", "17:30 - 18:30"];
-      reason += " · උණුසුම් දිනය: වේලා දෙකකට බෙදන්න / Hot: split into two slots";
-    } else {
-      slots = ["06:00 - 07:00"];
-    }
-  }
-  return { liters: Math.round(liters), slots, status, reason };
-}
-
-function render() {
-  if (!weather) return;
-  const c = weather.current;
-  document.getElementById("wTemp").textContent = c.temp.toFixed(1) + "°C";
-  document.getElementById("wHum").textContent = c.hum + "%";
-  document.getElementById("wWind").textContent = c.wind.toFixed(0) + " km/h";
-  document.getElementById("wRain").textContent = weather.days[0].rain + "%";
-
-  const tagText = { ok: "ජල සැපයුම් කළ හැක / Water OK", warn: "අඩු කරන්න / Reduce", skip: "නවත්වන්න / Skip" };
-  document.getElementById("forecast").innerHTML = weather.days.map((d, i) => {
-    const p = planDay(d);
-    const label = i === 0 ? "අද / Today" : new Date(d.date).toLocaleDateString("en-GB", { weekday: "short", day: "2-digit", month: "short" });
-    return `<div class="day">
-      <div class="d">${label}</div>
-      🌡 ${d.tmin.toFixed(0)}° -${d.tmax.toFixed(0)}°C<br>
-      ☔ ${d.rain}\% ·${d.mm.toFixed(1)} mm<br>
-      💧 ${p.liters} L<br>
-      <span class="tag ${p.status}">${tagText[p.status]}</span>
-    </div>`;
-  }).join("");
-
-  const today = weather.days[0];
-  const tp = planDay(today);
-  document.getElementById("todayPlan").innerHTML = `
-    <div class="big">${tp.liters} L</div>
-    <div class="note">${tp.reason}</div>
-    <div class="slots">${tp.slots.length ? tp.slots.map(s => `<span class="slot">⏰ ${s}</span>`).join("") : "<span class='slot'>—</span>"}</div>
-    <div class="note">Rule: rain ≥70% or ≥10 mm → skip · rain ≥40% → 50% · max ≥33°C → two cooler slots, +20% water.</div>`;
-  renderLog();
-}
-
-function addLog() {
-  const date = document.getElementById("logDate").value || new Date().toISOString().slice(0, 10);
-  const time = document.getElementById("logTime").value || "06:00";
-  const liters = parseFloat(document.getElementById("logLiters").value);
-  if (!liters || liters <= 0) { alert("ලීටර් ප්‍රමාණය ඇතුළත් කරන්න / Enter liters"); return; }
-  logs.unshift({ date, time, liters });
-  document.getElementById("logLiters").value = "";
-  renderLog();
-}
-
-function removeLog(i) { logs.splice(i, 1); renderLog(); }
-
-function renderLog() {
-  document.getElementById("logBody").innerHTML = logs.length
-    ? logs.map((l, i) => `<tr><td>${l.date}</td><td>${l.time}</td><td>${l.liters}</td>
-        <td><button class="del" onclick="removeLog(${i})">✕</button></td></tr>`).join("")
-    : `<tr><td colspan="4" style="color:var(--muted)">සටහන් නැත / No entries yet</td></tr>`;
-  const total = logs.reduce((s, l) => s + l.liters, 0);
-  document.getElementById("logTotal").textContent = total.toFixed(1);
-}
-
-// Harvest Functions
-function addHarvest() {
-  const date = document.getElementById("harvestDate").value || new Date().toISOString().slice(0, 10);
-  const kg = parseFloat(document.getElementById("harvestKg").value);
-  const price = parseFloat(document.getElementById("harvestPrice").value) || 0;
-  const notes = document.getElementById("harvestNotes").value.trim();
-
-  if (!kg || kg <= 0) { alert("කරුණාකර නිවැරදි අස්වනු බර (kg) ඇතුළත් කරන්න."); return; }
-
-  window.farmData.harvests.push({ date, kg, price, notes });
-  document.getElementById("harvestKg").value = "";
-  document.getElementById("harvestPrice").value = "";
-  document.getElementById("harvestNotes").value = "";
-
-  renderHarvests();
-}
-
-function removeHarvest(i) {
-  window.farmData.harvests.splice(i, 1);
-  renderHarvests();
-}
-
-function renderHarvests() {
-  const tbody = document.getElementById("harvestTableBody");
-  const H = window.farmData.harvests;
-
-  tbody.innerHTML = H.length
-    ? H.map((h, i) => `
-      <tr>
-        <td>${h.date}</td>
-        <td><b>${h.kg.toFixed(2)}</b></td>
-        <td>${h.price ? 'රු. ' + h.price.toFixed(2) : '-'}</td>
-        <td style="color:var(--amber); font-weight:bold;">${(h.kg * h.price) ? 'රු. ' + (h.kg * h.price).toLocaleString('en-US', {minimumFractionDigits: 2}) : '-'}</td>
-        <td>${h.notes || '-'}</td>
-        <td><button class="del" onclick="removeHarvest(${i})">✕</button></td>
-      </tr>
-    `).join("")
-    : `<tr><td colspan="6" style="color:var(--muted)">අස්වනු සටහන් කර නොමැත / No harvest entries</td></tr>`;
-
-  const totalKg = H.reduce((sum, h) => sum + h.kg, 0);
-  const totalRev = H.reduce((sum, h) => sum + (h.kg * h.price), 0);
-
-  document.getElementById("harvestTotalKg").textContent = totalKg.toFixed(2);
-  document.getElementById("harvestTotalRev").textContent = totalRev.toLocaleString('en-US', {minimumFractionDigits: 2});
-
-  if (typeof window.updateHarvestAnalytics === 'function') {
-    window.updateHarvestAnalytics();
-  }
-}
-
-document.getElementById("loc").textContent = LOC.name;
-document.getElementById("logDate").value = new Date().toISOString().slice(0, 10);
-document.getElementById("harvestDate").value = new Date().toISOString().slice(0, 10);
-loadWeather();
-</script>
-
-<!-- HARVEST ANALYTICS CHART SCRIPT -->
 <script>
 (function () {
-  const harvestSection = document.getElementById('harvestSection') || document.querySelector('.wrap');
+  const DK = { npk: 'dateNpk', fungicide: 'dateFungicide', hormone: 'dateHormone' };
+  const KEY_OF = { dateNpk: 'npk', dateFungicide: 'fungicide', dateHormone: 'hormone' };
+  const TX = {
+    si: {
+      prodLabel: 'ලේබලයේ ඇති නම (බෙහෙත් / පොහොර):', prodPh: 'උදා: Mancozeb 80% WP, 15-15-15',
+      priceLabel: 'විකුණූ මිල (රු. / කිලෝ එකක්):', pricePh: 'උදා: 450',
+      logTitle: 'යෙදුම් ඉතිහාසය (බෙහෙත් / පොහොර)', logTag: 'යෙදූ නම් සටහන',
+      thType: 'වර්ගය', thName: 'ලේබලයේ නම', thPrice: 'රු./kg', thValue: 'වටිනාකම (රු.)',
+      kpiRev: 'මුළු ආදායම', kpiRevSub: 'සාමාන්‍ය මිල: රු. ', emptyLog: 'තවම යෙදුම් සටහන් නැත',
+      npk: 'NPK පොහොර', fungicide: 'දිලීර නාශක', hormone: 'හෝමෝන', sessions: 'අස්වනු වාර',
+      invalid: 'කරුණාකර වලංගු දිනයක් සහ බරක් (kg > 0) ඇතුළත් කරන්න.', fresh: 'නෙළන ලද නැවුම් අස්වැන්න'
+    },
+    en: {
+      prodLabel: 'Product Name (as on label):', prodPh: 'e.g. Mancozeb 80% WP, 15-15-15',
+      priceLabel: 'Selling Price (Rs. per kg):', pricePh: 'e.g. 450',
+      logTitle: 'Application History (Chemicals / Fertilizers)', logTag: 'Product Log',
+      thType: 'Type', thName: 'Label Name', thPrice: 'Rs./kg', thValue: 'Value (Rs.)',
+      kpiRev: 'Total Revenue', kpiRevSub: 'Avg price: Rs. ', emptyLog: 'No applications logged yet',
+      npk: 'NPK Fertilizer', fungicide: 'Fungicide', hormone: 'Hormone', sessions: 'Sessions',
+      invalid: 'Please enter a valid date and weight (kg > 0).', fresh: 'Fresh picking'
+    }
+  };
+  const x = k => TX[currentLang][k];
+  const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  const fmt = n => Number(n).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  function ensure() {
+    if (!farmData.products) farmData.products = { npk: '', fungicide: '', hormone: '' };
+    if (!farmData.applog) farmData.applog = [];
+  }
 
-  if (harvestSection) {
-    const chartHTML = `
-      <div style="margin-top: 25px; background: #0c2118; padding: 20px; border-radius: 14px; border: 1px solid #1f4a35;">
-        <h3 style="color: #3ddc84; margin-top: 0; font-size: 1.2rem; display: flex; align-items: center; gap: 8px;">
-          📊 අස්වනු ප්‍රමාණය සහ මිල ඉහළ පහළ යාමේ ප්‍රස්ථාරය (Trends Chart)
+  /* ---------- 1. Product-name inputs on the 3 cards ---------- */
+  Object.keys(DK).forEach(key => {
+    const cardId = { npk: 'cardNpk', fungicide: 'cardFungicide', hormone: 'cardHormone' }[key];
+    const box = document.querySelector('#' + cardId + ' .schedule-inputs');
+    const g = document.createElement('div');
+    g.className = 'form-group';
+    g.innerHTML = '<label id="lblProd_' + key + '" for="prod_' + key + '"></label>' +
+      '<input type="text" id="prod_' + key + '" list="dl_' + key + '" autocomplete="off">' +
+      '<datalist id="dl_' + key + '"></datalist>';
+    box.insertBefore(g, box.firstChild);
+    g.querySelector('input').addEventListener('input', e => {
+      ensure();
+      const name = e.target.value;
+      farmData.products[key] = name;
+      const d = farmData[DK[key]];
+      if (d) {
+        const en = farmData.applog.find(a => a.type === key && a.date === d);
+        if (en) en.name = name.trim();
+        else if (name.trim()) farmData.applog.push({ id: Date.now() + key, type: key, date: d, name: name.trim() });
+      }
+      saveData();
+      renderLog();
+    });
+  });
+
+  /* ---------- 2. Application history panel ---------- */
+  const logPanel = document.createElement('section');
+  logPanel.className = 'panel';
+  logPanel.style.gridColumn = 'span 12';
+  logPanel.innerHTML =
+    '<div class="panel-header"><h2><span>📒</span> <span id="xLogTitle"></span></h2><span class="badge-tag" id="xLogTag"></span></div>' +
+    '<div class="harvest-table-wrap"><table class="harvest-table"><thead><tr>' +
+    '<th id="xThDate"></th><th id="xThType"></th><th id="xThName"></th><th style="text-align:right">&nbsp;</th>' +
+    '</tr></thead><tbody id="xLogBody"></tbody></table></div>';
+  document.querySelector('.panel-schedules').insertAdjacentElement('afterend', logPanel);
+
+  window.delLog = function (id) {
+    ensure();
+    farmData.applog = farmData.applog.filter(a => a.id !== id);
+    saveData();
+    renderLog();
+  };
+
+  function renderLog() {
+    ensure();
+    const body = document.getElementById('xLogBody');
+    const log = [...farmData.applog].sort((a, b) => b.date.localeCompare(a.date));
+    body.innerHTML = log.length ? '' : '<tr><td colspan="4" style="text-align:center;color:var(--text-muted);padding:1.5rem">' + x('emptyLog') + '</td></tr>';
+    log.forEach(a => {
+      const tr = document.createElement('tr');
+      tr.innerHTML = '<td style="font-weight:600">' + formatDateDisplay(a.date) + '</td>' +
+        '<td>' + x(a.type) + '</td>' +
+        '<td><span class="weight-badge">' + (esc(a.name) || '—') + '</span></td>' +
+        '<td style="text-align:right"><button class="btn-delete" onclick="delLog(\'' + a.id + '\')">🗑</button></td>';
+      body.appendChild(tr);
+    });
+    Object.keys(DK).forEach(key => {
+      const names = [...new Set(farmData.applog.filter(a => a.type === key && a.name).map(a => a.name))];
+      document.getElementById('dl_' + key).innerHTML = names.map(n => '<option value="' + esc(n) + '">').join('');
+    });
+  }
+
+  /* ---------- 3. Harvest form: price field ---------- */
+  const kgGroup = document.getElementById('harvestKg').closest('.form-group');
+  kgGroup.insertAdjacentHTML('afterend',
+    '<div class="form-group"><label for="harvestPrice" id="xLblPrice"></label>' +
+    '<input type="number" id="harvestPrice" step="0.01" min="0"></div>');
+
+  /* ---------- 4. Revenue KPI card ---------- */
+  document.querySelector('.kpi-row').insertAdjacentHTML('beforeend',
+    '<div class="kpi-card"><div class="kpi-info"><p class="label" id="xKpiRevLbl"></p>' +
+    '<h3 id="xKpiRev">0.00</h3><p class="subtext" id="xKpiRevSub"></p></div>' +
+    '<div class="kpi-icon-wrap kpi-icon-amber">💰</div></div>');
+
+  /* ---------- 5. Harvest table header with price + value ---------- */
+  document.querySelector('#harvestTable thead').innerHTML =
+    '<tr><th>#</th><th id="thDate"></th><th id="thWeight"></th><th id="xThPrice"></th><th id="xThValue"></th>' +
+    '<th id="thNotes"></th><th style="text-align:right" id="thAction"></th></tr>';
+
+  /* ---------- Overrides ---------- */
+  const origFC = handleFieldChange;
+  handleFieldChange = function (id, v) {
+    const type = KEY_OF[id];
+    if (type && v) {
+      ensure();
+      const nm = (farmData.products[type] || '').trim();
+      const en = farmData.applog.find(a => a.type === type && a.date === v);
+      if (en) { if (nm) en.name = nm; }
+      else farmData.applog.push({ id: Date.now() + type, type: type, date: v, name: nm });
+    }
+    origFC(id, v);
+  };
+
+  handleHarvestSubmit = function (event) {
+    event.preventDefault();
+    const dateVal = document.getElementById('harvestDate').value;
+    const kgVal = parseFloat(document.getElementById('harvestKg').value);
+    const price = parseFloat(document.getElementById('harvestPrice').value);
+    const notes = document.getElementById('harvestNotes').value.trim();
+    if (!dateVal || isNaN(kgVal) || kgVal <= 0) { alert(x('invalid')); return; }
+    farmData.harvests.unshift({
+      id: Date.now().toString(), date: dateVal, kg: kgVal,
+      price: isNaN(price) ? 0 : price, notes: notes || x('fresh')
+    });
+    saveData();
+    document.getElementById('harvestKg').value = '';
+    document.getElementById('harvestNotes').value = '';
+    setDateFieldToday('harvestDate');
+    renderHarvests();
+  };
+
+  renderHarvests = function () {
+    const tb = document.getElementById('harvestTableBody');
+    const empty = document.getElementById('harvestEmptyState');
+    const H = farmData.harvests || [];
+    tb.innerHTML = '';
+    let tk = 0, tv = 0, pricedKg = 0;
+    const sorted = [...H].sort((a, b) => new Date(b.date) - new Date(a.date));
+    sorted.forEach((it, i) => {
+      const kg = Number(it.kg), p = Number(it.price) || 0;
+      tk += kg; tv += kg * p; if (p) pricedKg += kg;
+      const tr = document.createElement('tr');
+      tr.innerHTML =
+        '<td style="color:var(--text-muted);font-size:.78rem">' + (sorted.length - i) + '</td>' +
+        '<td style="font-weight:600">' + formatDateDisplay(it.date) + '</td>' +
+        '<td><span class="weight-badge">' + kg.toFixed(2) + ' kg</span></td>' +
+        '<td>' + (p ? fmt(p) : '-') + '</td>' +
+        '<td style="font-weight:700;color:#fbbf24">' + (p ? fmt(kg * p) : '-') + '</td>' +
+        '<td style="color:var(--text-muted)">' + (esc(it.notes) || '-') + '</td>' +
+        '<td style="text-align:right"><button class="btn-delete" onclick="deleteHarvest(\'' + it.id + '\')">🗑</button></td>';
+      tb.appendChild(tr);
+    });
+    empty.style.display = H.length ? 'none' : 'block';
+    document.getElementById('tableSessionCount').textContent = H.length;
+    document.getElementById('kpiTotalYield').innerHTML = tk.toFixed(2) +
+      ' <span style="font-size:1rem;font-weight:normal;color:var(--text-muted)">kg</span>';
+    document.getElementById('kpiHarvestCount').textContent = H.length
+      ? H.length + ' ' + x('sessions') + ' (Avg ' + (tk / H.length).toFixed(1) + ' kg)' : t('kpiHarvestCountEmpty');
+    document.getElementById('xKpiRev').innerHTML = 'Rs. ' + fmt(tv);
+    document.getElementById('xKpiRevSub').textContent = pricedKg ? x('kpiRevSub') + fmt(tv / pricedKg) + ' / kg' : '—';
+  };
+
+  exportCsv = function () {
+    if (!farmData.harvests || !farmData.harvests.length) { alert(t('alertNoExport')); return; }
+    let csv = 'ID,Date,Weight_kg,Price_per_kg,Value,Notes\n';
+    farmData.harvests.forEach(h => {
+      const p = Number(h.price) || 0;
+      csv += '"' + h.id + '","' + h.date + '",' + h.kg + ',' + p + ',' + (h.kg * p).toFixed(2) +
+        ',"' + (h.notes || '').replace(/"/g, '""') + '"\n';
+    });
+    csv += '\nDate,Type,Product\n';
+    (farmData.applog || []).forEach(a => { csv += '"' + a.date + '","' + a.type + '","' + (a.name || '').replace(/"/g, '""') + '"\n'; });
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8;' }));
+    link.download = 'Nai_Miris_Harvest_' + getTodayString() + '.csv';
+    document.body.appendChild(link); link.click(); document.body.removeChild(link);
+  };
+
+  const origSync = syncInputsFromState;
+  syncInputsFromState = function () {
+    ensure();
+    origSync();
+    Object.keys(DK).forEach(k => { document.getElementById('prod_' + k).value = farmData.products[k] || ''; });
+  };
+
+  const origRenderAll = renderAll;
+  renderAll = function () { origRenderAll(); renderLog(); };
+
+  const origUL = updateLanguageUI;
+  updateLanguageUI = function () {
+    origUL();
+    Object.keys(DK).forEach(k => {
+      document.getElementById('lblProd_' + k).textContent = x('prodLabel');
+      document.getElementById('prod_' + k).placeholder = x('prodPh');
+    });
+    document.getElementById('xLblPrice').textContent = x('priceLabel');
+    document.getElementById('harvestPrice').placeholder = x('pricePh');
+    document.getElementById('xLogTitle').textContent = x('logTitle');
+    document.getElementById('xLogTag').textContent = x('logTag');
+    document.getElementById('xThDate').textContent = t('thDate');
+    document.getElementById('xThType').textContent = x('thType');
+    document.getElementById('xThName').textContent = x('thName');
+    document.getElementById('xThPrice').textContent = x('thPrice');
+    document.getElementById('xThValue').textContent = x('thValue');
+    document.getElementById('xKpiRevLbl').textContent = x('kpiRev');
+  };
+})();
+</script>
